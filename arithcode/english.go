@@ -93,7 +93,7 @@ func EncodeString(s string, w io.Writer) error {
 	// Convert string to runes to properly count characters
 	runes := []rune(s)
 	length := len(runes)
-	
+
 	// Encode length as variable-length quantity (up to 4 bytes)
 	tempLen := length
 	for i := 0; i < 4; i++ {
@@ -179,7 +179,7 @@ func DecodeString(r io.Reader) (string, error) {
 			if err != nil {
 				return "", err
 			}
-			
+
 			utf8Bytes := make([]byte, numBytes)
 			for i := 0; i < numBytes; i++ {
 				b, err := dec.Decode(byteModel)
@@ -188,7 +188,7 @@ func DecodeString(r io.Reader) (string, error) {
 				}
 				utf8Bytes[i] = byte(b)
 			}
-			
+
 			// Convert UTF-8 bytes to rune
 			runes := []rune(string(utf8Bytes))
 			if len(runes) > 0 {

@@ -263,12 +263,12 @@ func TestMessageWithMapRoundtrip(t *testing.T) {
 
 func TestUserProfileRoundtrip(t *testing.T) {
 	original := &testdata.UserProfile{
-		UserId:   123456,
-		Username: "johndoe",
-		Email:    "john.doe@example.com",
-		FullName: "John Doe",
-		Bio:      "Software engineer passionate about compression algorithms and distributed systems.",
-		Tags:     []string{"golang", "protobuf", "compression", "algorithms"},
+		UserId:        123456,
+		Username:      "johndoe",
+		Email:         "john.doe@example.com",
+		FullName:      "John Doe",
+		Bio:           "Software engineer passionate about compression algorithms and distributed systems.",
+		Tags:          []string{"golang", "protobuf", "compression", "algorithms"},
 		AccountStatus: testdata.Status_ACTIVE,
 		Address: &testdata.UserProfile_Address{
 			Street:  "123 Main St",

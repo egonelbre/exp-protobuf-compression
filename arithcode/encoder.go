@@ -18,10 +18,10 @@ const (
 
 // Encoder compresses data using arithmetic coding.
 type Encoder struct {
-	output       *bitWriter
-	low          uint64 // Lower bound of the current interval
-	high         uint64 // Upper bound of the current interval
-	pendingBits  int    // Number of pending underflow bits
+	output      *bitWriter
+	low         uint64 // Lower bound of the current interval
+	high        uint64 // Upper bound of the current interval
+	pendingBits int    // Number of pending underflow bits
 }
 
 // NewEncoder creates a new arithmetic encoder that writes to w.

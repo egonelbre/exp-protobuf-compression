@@ -17,9 +17,9 @@ func TestCompressionRatioEnglishText(t *testing.T) {
 		"symbols based on their probability distributions. "
 
 	testCases := []struct {
-		name       string
-		text       string
-		maxRatio   float64 // Maximum acceptable ratio (lower is better)
+		name     string
+		text     string
+		maxRatio float64 // Maximum acceptable ratio (lower is better)
 	}{
 		{
 			name:     "Small (100 bytes)",

@@ -101,9 +101,9 @@ func createAdaptiveVarintModel(fieldPath string) arithcode.Model {
 	// For now, use a simple model that favors smaller values
 	// In a production implementation, this could analyze the field name
 	// or be trained on sample data to determine optimal frequency distribution
-	
+
 	freqs := make([]uint64, 256)
-	
+
 	// Default distribution favoring small values
 	for i := 0; i < 128; i++ {
 		freqs[i] = 100 - uint64(i/2)

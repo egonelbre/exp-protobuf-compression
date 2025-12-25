@@ -31,12 +31,12 @@ func TestCompressionRatioStructuredData(t *testing.T) {
 			name: "UserProfile_Small",
 			create: func() proto.Message {
 				return &testdata.UserProfile{
-					UserId:   123456,
-					Username: "johndoe",
-					Email:    "john.doe@example.com",
-					FullName: "John Doe",
-					Bio:      "Software engineer passionate about compression algorithms.",
-					Tags:     []string{"golang", "protobuf", "compression"},
+					UserId:        123456,
+					Username:      "johndoe",
+					Email:         "john.doe@example.com",
+					FullName:      "John Doe",
+					Bio:           "Software engineer passionate about compression algorithms.",
+					Tags:          []string{"golang", "protobuf", "compression"},
 					AccountStatus: testdata.Status_ACTIVE,
 				}
 			},
@@ -123,8 +123,8 @@ func TestCompressionRatioStructuredData(t *testing.T) {
 // TestCompressionRatioNumericData tests compression of numeric-heavy messages.
 func TestCompressionRatioNumericData(t *testing.T) {
 	testCases := []struct {
-		name    string
-		create  func() *testdata.NumericMessage
+		name     string
+		create   func() *testdata.NumericMessage
 		maxRatio float64
 	}{
 		{
@@ -200,12 +200,12 @@ func createLargeUserProfile() *testdata.UserProfile {
 	}
 
 	return &testdata.UserProfile{
-		UserId:   9876543210,
-		Username: "experienced_engineer_2024",
-		Email:    "engineer.experienced@example.com",
-		FullName: "Dr. Alexandria Engineering Professional",
-		Bio:      bio,
-		Tags:     tags,
+		UserId:        9876543210,
+		Username:      "experienced_engineer_2024",
+		Email:         "engineer.experienced@example.com",
+		FullName:      "Dr. Alexandria Engineering Professional",
+		Bio:           bio,
+		Tags:          tags,
 		AccountStatus: testdata.Status_ACTIVE,
 		Address: &testdata.UserProfile_Address{
 			Street:  "1234 Technology Drive, Suite 567",

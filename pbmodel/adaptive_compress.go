@@ -285,7 +285,7 @@ func adaptiveCompressFieldValue(fieldPath string, fd protoreflect.FieldDescripto
 		// Encode string length then bytes
 		str := value.String()
 		strBytes := []byte(str)
-		
+
 		// Encode length
 		lengthBytes := encodeVarint(uint64(len(strBytes)))
 		for _, b := range lengthBytes {
@@ -293,7 +293,7 @@ func adaptiveCompressFieldValue(fieldPath string, fd protoreflect.FieldDescripto
 				return err
 			}
 		}
-		
+
 		// Encode string bytes
 		for _, b := range strBytes {
 			if err := enc.Encode(int(b), amb.byteModel); err != nil {

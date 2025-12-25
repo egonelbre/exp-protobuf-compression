@@ -302,7 +302,7 @@ func adaptiveDecompressFieldValue(fieldPath string, fd protoreflect.FieldDescrip
 		if err != nil {
 			return protoreflect.Value{}, err
 		}
-		
+
 		// Decode string bytes
 		strBytes := make([]byte, length)
 		for i := 0; i < int(length); i++ {
@@ -312,7 +312,7 @@ func adaptiveDecompressFieldValue(fieldPath string, fd protoreflect.FieldDescrip
 			}
 			strBytes[i] = byte(b)
 		}
-		
+
 		return protoreflect.ValueOfString(string(strBytes)), nil
 
 	case protoreflect.BytesKind:
