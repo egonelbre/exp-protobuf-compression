@@ -2878,7 +2878,7 @@ const file_meshtastic_config_proto_rawDesc = "" +
 	"\x15admin_channel_enabled\x18\b \x01(\bR\x13adminChannelEnabled\x1a\x12\n" +
 	"\x10SessionkeyConfigB\x11\n" +
 	"\x0fpayload_variantBw\n" +
-	"\x14org.meshtastic.protoB\fConfigProtosZ7github.com/egonelbre/vibing/pbmodel/testdata/meshtastic\xaa\x02\x14Meshtastic.Protobufs\xba\x02\x00b\x06proto3"
+	"\x14org.meshtastic.protoB\fConfigProtosZ7github.com/egonelbre/protobuf-compression/pbmodel/testdata/meshtastic\xaa\x02\x14Meshtastic.Protobufs\xba\x02\x00b\x06proto3"
 
 var (
 	file_meshtastic_config_proto_rawDescOnce sync.Once

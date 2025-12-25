@@ -11,7 +11,7 @@ import "meshtastic/telemetry.proto";
 import "meshtastic/xmodem.proto";
 
 option csharp_namespace = "Meshtastic.Protobufs";
-option go_package = "github.com/egonelbre/vibing/pbmodel/testdata/meshtastic";
+option go_package = "github.com/egonelbre/protobuf-compression/pbmodel/testdata/meshtastic";
 option java_outer_classname = "MeshProtos";
 option java_package = "org.meshtastic.proto";
 option swift_prefix = "";

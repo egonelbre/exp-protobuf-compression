@@ -1,7 +1,7 @@
 package pbmodel
 
 import (
-	"github.com/egonelbre/vibing/arithcode"
+	"github.com/egonelbre/protobuf-compression/arithcode"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"unicode/utf8"
 
-	"github.com/egonelbre/vibing/pbmodel/testdata"
+	"github.com/egonelbre/protobuf-compression/pbmodel/testdata"
 	"google.golang.org/protobuf/proto"
 )
 

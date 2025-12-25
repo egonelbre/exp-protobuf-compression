@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package testdata;
 
-option go_package = "github.com/egonelbre/vibing/pbmodel/testdata";
+option go_package = "github.com/egonelbre/protobuf-compression/pbmodel/testdata";
 
 // Simple message with basic field types
 message SimpleMessage {
@@ -112,7 +112,7 @@ message UserProfile {
   string bio = 5;
   repeated string tags = 6;
   Status account_status = 7;
-  
+
   message Address {
     string street = 1;
     string city = 2;
@@ -120,7 +120,7 @@ message UserProfile {
     string zip = 4;
     string country = 5;
   }
-  
+
   Address address = 8;
   int64 created_at = 9;
   int64 updated_at = 10;

@@ -2490,7 +2490,7 @@ const file_meshtastic_module_config_proto_rawDesc = "" +
 	"\aUNKNOWN\x10\x00\x12\x10\n" +
 	"\fDIGITAL_READ\x10\x01\x12\x11\n" +
 	"\rDIGITAL_WRITE\x10\x02B}\n" +
-	"\x14org.meshtastic.protoB\x12ModuleConfigProtosZ7github.com/egonelbre/vibing/pbmodel/testdata/meshtastic\xaa\x02\x14Meshtastic.Protobufs\xba\x02\x00b\x06proto3"
+	"\x14org.meshtastic.protoB\x12ModuleConfigProtosZ7github.com/egonelbre/protobuf-compression/pbmodel/testdata/meshtastic\xaa\x02\x14Meshtastic.Protobufs\xba\x02\x00b\x06proto3"
 
 var (
 	file_meshtastic_module_config_proto_rawDescOnce sync.Once

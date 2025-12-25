@@ -44,7 +44,7 @@ This project implements arithmetic coding compression for Protocol Buffer messag
 ## Installation
 
 ```bash
-go get github.com/egonelbre/vibing
+go get github.com/egonelbre/protobuf-compression
 ```
 
 ## Usage
@@ -59,8 +59,8 @@ import (
     "fmt"
     "log"
 
-    "github.com/egonelbre/vibing/pbmodel"
-    "github.com/egonelbre/vibing/pbmodel/testdata"
+    "github.com/egonelbre/protobuf-compression/pbmodel"
+    "github.com/egonelbre/protobuf-compression/pbmodel/testdata"
 )
 
 func main() {
@@ -142,7 +142,7 @@ import (
     "bytes"
     "fmt"
 
-    "github.com/egonelbre/vibing/arithcode"
+    "github.com/egonelbre/protobuf-compression/arithcode"
 )
 
 func main() {
@@ -184,7 +184,7 @@ import (
     "bytes"
     "fmt"
 
-    "github.com/egonelbre/vibing/arithcode"
+    "github.com/egonelbre/protobuf-compression/arithcode"
 )
 
 func main() {

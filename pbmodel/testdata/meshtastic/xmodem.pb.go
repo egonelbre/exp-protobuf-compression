@@ -173,7 +173,7 @@ const file_meshtastic_xmodem_proto_rawDesc = "" +
 	"\x03NAK\x10\x15\x12\a\n" +
 	"\x03CAN\x10\x18\x12\t\n" +
 	"\x05CTRLZ\x10\x1aBw\n" +
-	"\x14org.meshtastic.protoB\fXmodemProtosZ7github.com/egonelbre/vibing/pbmodel/testdata/meshtastic\xaa\x02\x14Meshtastic.Protobufs\xba\x02\x00b\x06proto3"
+	"\x14org.meshtastic.protoB\fXmodemProtosZ7github.com/egonelbre/protobuf-compression/pbmodel/testdata/meshtastic\xaa\x02\x14Meshtastic.Protobufs\xba\x02\x00b\x06proto3"
 
 var (
 	file_meshtastic_xmodem_proto_rawDescOnce sync.Once

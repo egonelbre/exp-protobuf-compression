@@ -376,7 +376,7 @@ const file_meshtastic_channel_proto_rawDesc = "" +
 	"\bDISABLED\x10\x00\x12\v\n" +
 	"\aPRIMARY\x10\x01\x12\r\n" +
 	"\tSECONDARY\x10\x02Bx\n" +
-	"\x14org.meshtastic.protoB\rChannelProtosZ7github.com/egonelbre/vibing/pbmodel/testdata/meshtastic\xaa\x02\x14Meshtastic.Protobufs\xba\x02\x00b\x06proto3"
+	"\x14org.meshtastic.protoB\rChannelProtosZ7github.com/egonelbre/protobuf-compression/pbmodel/testdata/meshtastic\xaa\x02\x14Meshtastic.Protobufs\xba\x02\x00b\x06proto3"
 
 var (
 	file_meshtastic_channel_proto_rawDescOnce sync.Once

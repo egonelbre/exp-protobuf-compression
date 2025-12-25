@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/egonelbre/vibing/pbmodel/testdata"
+	"github.com/egonelbre/protobuf-compression/pbmodel/testdata"
 )
 
 func repeatText(text string, targetSize int) string {

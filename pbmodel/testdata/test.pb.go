@@ -1329,7 +1329,7 @@ const file_pbmodel_testdata_test_proto_rawDesc = "" +
 	"\x06ACTIVE\x10\x02\x12\r\n" +
 	"\tCOMPLETED\x10\x03\x12\n" +
 	"\n" +
-	"\x06FAILED\x10\x04B.Z,github.com/egonelbre/vibing/pbmodel/testdatab\x06proto3"
+	"\x06FAILED\x10\x04B.Z,github.com/egonelbre/protobuf-compression/pbmodel/testdatab\x06proto3"
 
 var (
 	file_pbmodel_testdata_test_proto_rawDescOnce sync.Once

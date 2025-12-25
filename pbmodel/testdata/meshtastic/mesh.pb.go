@@ -5581,7 +5581,7 @@ const file_meshtastic_mesh_proto_rawDesc = "" +
 	"\x10BLUETOOTH_CONFIG\x10\x80@\x12\x14\n" +
 	"\x0eNETWORK_CONFIG\x10\x80\x80\x01Bu\n" +
 	"\x14org.meshtastic.protoB\n" +
-	"MeshProtosZ7github.com/egonelbre/vibing/pbmodel/testdata/meshtastic\xaa\x02\x14Meshtastic.Protobufs\xba\x02\x00b\x06proto3"
+	"MeshProtosZ7github.com/egonelbre/protobuf-compression/pbmodel/testdata/meshtastic\xaa\x02\x14Meshtastic.Protobufs\xba\x02\x00b\x06proto3"
 
 var (
 	file_meshtastic_mesh_proto_rawDescOnce sync.Once

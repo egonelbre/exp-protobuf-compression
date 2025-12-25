@@ -6,7 +6,7 @@ import (
 	"io"
 	"math"
 
-	"github.com/egonelbre/vibing/arithcode"
+	"github.com/egonelbre/protobuf-compression/arithcode"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )

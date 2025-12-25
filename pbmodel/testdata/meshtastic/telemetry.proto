@@ -3,7 +3,7 @@ syntax = "proto3";
 package meshtastic;
 
 option csharp_namespace = "Meshtastic.Protobufs";
-option go_package = "github.com/egonelbre/vibing/pbmodel/testdata/meshtastic";
+option go_package = "github.com/egonelbre/protobuf-compression/pbmodel/testdata/meshtastic";
 option java_outer_classname = "TelemetryProtos";
 option java_package = "org.meshtastic.proto";
 option swift_prefix = "";
