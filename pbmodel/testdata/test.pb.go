@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v6.30.2
-// source: pbmodel/testdata/test.proto
+// source: test.proto
 
 package testdata
 
@@ -61,11 +61,11 @@ func (x Status) String() string {
 }
 
 func (Status) Descriptor() protoreflect.EnumDescriptor {
-	return file_pbmodel_testdata_test_proto_enumTypes[0].Descriptor()
+	return file_test_proto_enumTypes[0].Descriptor()
 }
 
 func (Status) Type() protoreflect.EnumType {
-	return &file_pbmodel_testdata_test_proto_enumTypes[0]
+	return &file_test_proto_enumTypes[0]
 }
 
 func (x Status) Number() protoreflect.EnumNumber {
@@ -74,7 +74,7 @@ func (x Status) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Status.Descriptor instead.
 func (Status) EnumDescriptor() ([]byte, []int) {
-	return file_pbmodel_testdata_test_proto_rawDescGZIP(), []int{0}
+	return file_test_proto_rawDescGZIP(), []int{0}
 }
 
 // Simple message with basic field types
@@ -89,7 +89,7 @@ type SimpleMessage struct {
 
 func (x *SimpleMessage) Reset() {
 	*x = SimpleMessage{}
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[0]
+	mi := &file_test_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -101,7 +101,7 @@ func (x *SimpleMessage) String() string {
 func (*SimpleMessage) ProtoMessage() {}
 
 func (x *SimpleMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[0]
+	mi := &file_test_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -114,7 +114,7 @@ func (x *SimpleMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SimpleMessage.ProtoReflect.Descriptor instead.
 func (*SimpleMessage) Descriptor() ([]byte, []int) {
-	return file_pbmodel_testdata_test_proto_rawDescGZIP(), []int{0}
+	return file_test_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *SimpleMessage) GetId() int32 {
@@ -159,7 +159,7 @@ type NumericMessage struct {
 
 func (x *NumericMessage) Reset() {
 	*x = NumericMessage{}
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[1]
+	mi := &file_test_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -171,7 +171,7 @@ func (x *NumericMessage) String() string {
 func (*NumericMessage) ProtoMessage() {}
 
 func (x *NumericMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[1]
+	mi := &file_test_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -184,7 +184,7 @@ func (x *NumericMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NumericMessage.ProtoReflect.Descriptor instead.
 func (*NumericMessage) Descriptor() ([]byte, []int) {
-	return file_pbmodel_testdata_test_proto_rawDescGZIP(), []int{1}
+	return file_test_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *NumericMessage) GetInt32Field() int32 {
@@ -283,7 +283,7 @@ type RepeatedMessage struct {
 
 func (x *RepeatedMessage) Reset() {
 	*x = RepeatedMessage{}
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[2]
+	mi := &file_test_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -295,7 +295,7 @@ func (x *RepeatedMessage) String() string {
 func (*RepeatedMessage) ProtoMessage() {}
 
 func (x *RepeatedMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[2]
+	mi := &file_test_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -308,7 +308,7 @@ func (x *RepeatedMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RepeatedMessage.ProtoReflect.Descriptor instead.
 func (*RepeatedMessage) Descriptor() ([]byte, []int) {
-	return file_pbmodel_testdata_test_proto_rawDescGZIP(), []int{2}
+	return file_test_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *RepeatedMessage) GetNumbers() []int32 {
@@ -344,7 +344,7 @@ type NestedMessage struct {
 
 func (x *NestedMessage) Reset() {
 	*x = NestedMessage{}
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[3]
+	mi := &file_test_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -356,7 +356,7 @@ func (x *NestedMessage) String() string {
 func (*NestedMessage) ProtoMessage() {}
 
 func (x *NestedMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[3]
+	mi := &file_test_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -369,7 +369,7 @@ func (x *NestedMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NestedMessage.ProtoReflect.Descriptor instead.
 func (*NestedMessage) Descriptor() ([]byte, []int) {
-	return file_pbmodel_testdata_test_proto_rawDescGZIP(), []int{3}
+	return file_test_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *NestedMessage) GetInner() *NestedMessage_Inner {
@@ -403,7 +403,7 @@ type DeepNesting struct {
 
 func (x *DeepNesting) Reset() {
 	*x = DeepNesting{}
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[4]
+	mi := &file_test_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -415,7 +415,7 @@ func (x *DeepNesting) String() string {
 func (*DeepNesting) ProtoMessage() {}
 
 func (x *DeepNesting) ProtoReflect() protoreflect.Message {
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[4]
+	mi := &file_test_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -428,7 +428,7 @@ func (x *DeepNesting) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeepNesting.ProtoReflect.Descriptor instead.
 func (*DeepNesting) Descriptor() ([]byte, []int) {
-	return file_pbmodel_testdata_test_proto_rawDescGZIP(), []int{4}
+	return file_test_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *DeepNesting) GetLevel1() *DeepNesting_Level1 {
@@ -448,7 +448,7 @@ type MessageWithEnum struct {
 
 func (x *MessageWithEnum) Reset() {
 	*x = MessageWithEnum{}
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[5]
+	mi := &file_test_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -460,7 +460,7 @@ func (x *MessageWithEnum) String() string {
 func (*MessageWithEnum) ProtoMessage() {}
 
 func (x *MessageWithEnum) ProtoReflect() protoreflect.Message {
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[5]
+	mi := &file_test_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -473,7 +473,7 @@ func (x *MessageWithEnum) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MessageWithEnum.ProtoReflect.Descriptor instead.
 func (*MessageWithEnum) Descriptor() ([]byte, []int) {
-	return file_pbmodel_testdata_test_proto_rawDescGZIP(), []int{5}
+	return file_test_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *MessageWithEnum) GetStatus() Status {
@@ -506,7 +506,7 @@ type MessageWithOneof struct {
 
 func (x *MessageWithOneof) Reset() {
 	*x = MessageWithOneof{}
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[6]
+	mi := &file_test_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -518,7 +518,7 @@ func (x *MessageWithOneof) String() string {
 func (*MessageWithOneof) ProtoMessage() {}
 
 func (x *MessageWithOneof) ProtoReflect() protoreflect.Message {
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[6]
+	mi := &file_test_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -531,7 +531,7 @@ func (x *MessageWithOneof) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MessageWithOneof.ProtoReflect.Descriptor instead.
 func (*MessageWithOneof) Descriptor() ([]byte, []int) {
-	return file_pbmodel_testdata_test_proto_rawDescGZIP(), []int{6}
+	return file_test_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *MessageWithOneof) GetValue() isMessageWithOneof_Value {
@@ -608,7 +608,7 @@ type MessageWithBytes struct {
 
 func (x *MessageWithBytes) Reset() {
 	*x = MessageWithBytes{}
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[7]
+	mi := &file_test_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -620,7 +620,7 @@ func (x *MessageWithBytes) String() string {
 func (*MessageWithBytes) ProtoMessage() {}
 
 func (x *MessageWithBytes) ProtoReflect() protoreflect.Message {
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[7]
+	mi := &file_test_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -633,7 +633,7 @@ func (x *MessageWithBytes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MessageWithBytes.ProtoReflect.Descriptor instead.
 func (*MessageWithBytes) Descriptor() ([]byte, []int) {
-	return file_pbmodel_testdata_test_proto_rawDescGZIP(), []int{7}
+	return file_test_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *MessageWithBytes) GetData() []byte {
@@ -661,7 +661,7 @@ type MessageWithMap struct {
 
 func (x *MessageWithMap) Reset() {
 	*x = MessageWithMap{}
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[8]
+	mi := &file_test_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -673,7 +673,7 @@ func (x *MessageWithMap) String() string {
 func (*MessageWithMap) ProtoMessage() {}
 
 func (x *MessageWithMap) ProtoReflect() protoreflect.Message {
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[8]
+	mi := &file_test_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -686,7 +686,7 @@ func (x *MessageWithMap) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MessageWithMap.ProtoReflect.Descriptor instead.
 func (*MessageWithMap) Descriptor() ([]byte, []int) {
-	return file_pbmodel_testdata_test_proto_rawDescGZIP(), []int{8}
+	return file_test_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *MessageWithMap) GetCounts() map[string]int32 {
@@ -723,7 +723,7 @@ type UserProfile struct {
 
 func (x *UserProfile) Reset() {
 	*x = UserProfile{}
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[9]
+	mi := &file_test_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -735,7 +735,7 @@ func (x *UserProfile) String() string {
 func (*UserProfile) ProtoMessage() {}
 
 func (x *UserProfile) ProtoReflect() protoreflect.Message {
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[9]
+	mi := &file_test_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -748,7 +748,7 @@ func (x *UserProfile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserProfile.ProtoReflect.Descriptor instead.
 func (*UserProfile) Descriptor() ([]byte, []int) {
-	return file_pbmodel_testdata_test_proto_rawDescGZIP(), []int{9}
+	return file_test_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *UserProfile) GetUserId() int64 {
@@ -837,7 +837,7 @@ type EmptyMessage struct {
 
 func (x *EmptyMessage) Reset() {
 	*x = EmptyMessage{}
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[10]
+	mi := &file_test_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -849,7 +849,7 @@ func (x *EmptyMessage) String() string {
 func (*EmptyMessage) ProtoMessage() {}
 
 func (x *EmptyMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[10]
+	mi := &file_test_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -862,7 +862,7 @@ func (x *EmptyMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EmptyMessage.ProtoReflect.Descriptor instead.
 func (*EmptyMessage) Descriptor() ([]byte, []int) {
-	return file_pbmodel_testdata_test_proto_rawDescGZIP(), []int{10}
+	return file_test_proto_rawDescGZIP(), []int{10}
 }
 
 type NestedMessage_Inner struct {
@@ -875,7 +875,7 @@ type NestedMessage_Inner struct {
 
 func (x *NestedMessage_Inner) Reset() {
 	*x = NestedMessage_Inner{}
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[11]
+	mi := &file_test_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -887,7 +887,7 @@ func (x *NestedMessage_Inner) String() string {
 func (*NestedMessage_Inner) ProtoMessage() {}
 
 func (x *NestedMessage_Inner) ProtoReflect() protoreflect.Message {
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[11]
+	mi := &file_test_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -900,7 +900,7 @@ func (x *NestedMessage_Inner) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NestedMessage_Inner.ProtoReflect.Descriptor instead.
 func (*NestedMessage_Inner) Descriptor() ([]byte, []int) {
-	return file_pbmodel_testdata_test_proto_rawDescGZIP(), []int{3, 0}
+	return file_test_proto_rawDescGZIP(), []int{3, 0}
 }
 
 func (x *NestedMessage_Inner) GetValue() string {
@@ -926,7 +926,7 @@ type DeepNesting_Level1 struct {
 
 func (x *DeepNesting_Level1) Reset() {
 	*x = DeepNesting_Level1{}
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[12]
+	mi := &file_test_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -938,7 +938,7 @@ func (x *DeepNesting_Level1) String() string {
 func (*DeepNesting_Level1) ProtoMessage() {}
 
 func (x *DeepNesting_Level1) ProtoReflect() protoreflect.Message {
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[12]
+	mi := &file_test_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -951,7 +951,7 @@ func (x *DeepNesting_Level1) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeepNesting_Level1.ProtoReflect.Descriptor instead.
 func (*DeepNesting_Level1) Descriptor() ([]byte, []int) {
-	return file_pbmodel_testdata_test_proto_rawDescGZIP(), []int{4, 0}
+	return file_test_proto_rawDescGZIP(), []int{4, 0}
 }
 
 func (x *DeepNesting_Level1) GetLevel2() *DeepNesting_Level1_Level2 {
@@ -970,7 +970,7 @@ type DeepNesting_Level1_Level2 struct {
 
 func (x *DeepNesting_Level1_Level2) Reset() {
 	*x = DeepNesting_Level1_Level2{}
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[13]
+	mi := &file_test_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -982,7 +982,7 @@ func (x *DeepNesting_Level1_Level2) String() string {
 func (*DeepNesting_Level1_Level2) ProtoMessage() {}
 
 func (x *DeepNesting_Level1_Level2) ProtoReflect() protoreflect.Message {
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[13]
+	mi := &file_test_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -995,7 +995,7 @@ func (x *DeepNesting_Level1_Level2) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeepNesting_Level1_Level2.ProtoReflect.Descriptor instead.
 func (*DeepNesting_Level1_Level2) Descriptor() ([]byte, []int) {
-	return file_pbmodel_testdata_test_proto_rawDescGZIP(), []int{4, 0, 0}
+	return file_test_proto_rawDescGZIP(), []int{4, 0, 0}
 }
 
 func (x *DeepNesting_Level1_Level2) GetLevel3() *DeepNesting_Level1_Level2_Level3 {
@@ -1014,7 +1014,7 @@ type DeepNesting_Level1_Level2_Level3 struct {
 
 func (x *DeepNesting_Level1_Level2_Level3) Reset() {
 	*x = DeepNesting_Level1_Level2_Level3{}
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[14]
+	mi := &file_test_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1026,7 +1026,7 @@ func (x *DeepNesting_Level1_Level2_Level3) String() string {
 func (*DeepNesting_Level1_Level2_Level3) ProtoMessage() {}
 
 func (x *DeepNesting_Level1_Level2_Level3) ProtoReflect() protoreflect.Message {
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[14]
+	mi := &file_test_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1039,7 +1039,7 @@ func (x *DeepNesting_Level1_Level2_Level3) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeepNesting_Level1_Level2_Level3.ProtoReflect.Descriptor instead.
 func (*DeepNesting_Level1_Level2_Level3) Descriptor() ([]byte, []int) {
-	return file_pbmodel_testdata_test_proto_rawDescGZIP(), []int{4, 0, 0, 0}
+	return file_test_proto_rawDescGZIP(), []int{4, 0, 0, 0}
 }
 
 func (x *DeepNesting_Level1_Level2_Level3) GetLevel4() *DeepNesting_Level1_Level2_Level3_Level4 {
@@ -1058,7 +1058,7 @@ type DeepNesting_Level1_Level2_Level3_Level4 struct {
 
 func (x *DeepNesting_Level1_Level2_Level3_Level4) Reset() {
 	*x = DeepNesting_Level1_Level2_Level3_Level4{}
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[15]
+	mi := &file_test_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1070,7 +1070,7 @@ func (x *DeepNesting_Level1_Level2_Level3_Level4) String() string {
 func (*DeepNesting_Level1_Level2_Level3_Level4) ProtoMessage() {}
 
 func (x *DeepNesting_Level1_Level2_Level3_Level4) ProtoReflect() protoreflect.Message {
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[15]
+	mi := &file_test_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1083,7 +1083,7 @@ func (x *DeepNesting_Level1_Level2_Level3_Level4) ProtoReflect() protoreflect.Me
 
 // Deprecated: Use DeepNesting_Level1_Level2_Level3_Level4.ProtoReflect.Descriptor instead.
 func (*DeepNesting_Level1_Level2_Level3_Level4) Descriptor() ([]byte, []int) {
-	return file_pbmodel_testdata_test_proto_rawDescGZIP(), []int{4, 0, 0, 0, 0}
+	return file_test_proto_rawDescGZIP(), []int{4, 0, 0, 0, 0}
 }
 
 func (x *DeepNesting_Level1_Level2_Level3_Level4) GetLevel5() *DeepNesting_Level1_Level2_Level3_Level4_Level5 {
@@ -1103,7 +1103,7 @@ type DeepNesting_Level1_Level2_Level3_Level4_Level5 struct {
 
 func (x *DeepNesting_Level1_Level2_Level3_Level4_Level5) Reset() {
 	*x = DeepNesting_Level1_Level2_Level3_Level4_Level5{}
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[16]
+	mi := &file_test_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1115,7 +1115,7 @@ func (x *DeepNesting_Level1_Level2_Level3_Level4_Level5) String() string {
 func (*DeepNesting_Level1_Level2_Level3_Level4_Level5) ProtoMessage() {}
 
 func (x *DeepNesting_Level1_Level2_Level3_Level4_Level5) ProtoReflect() protoreflect.Message {
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[16]
+	mi := &file_test_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1128,7 +1128,7 @@ func (x *DeepNesting_Level1_Level2_Level3_Level4_Level5) ProtoReflect() protoref
 
 // Deprecated: Use DeepNesting_Level1_Level2_Level3_Level4_Level5.ProtoReflect.Descriptor instead.
 func (*DeepNesting_Level1_Level2_Level3_Level4_Level5) Descriptor() ([]byte, []int) {
-	return file_pbmodel_testdata_test_proto_rawDescGZIP(), []int{4, 0, 0, 0, 0, 0}
+	return file_test_proto_rawDescGZIP(), []int{4, 0, 0, 0, 0, 0}
 }
 
 func (x *DeepNesting_Level1_Level2_Level3_Level4_Level5) GetDeepValue() string {
@@ -1158,7 +1158,7 @@ type UserProfile_Address struct {
 
 func (x *UserProfile_Address) Reset() {
 	*x = UserProfile_Address{}
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[19]
+	mi := &file_test_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1170,7 +1170,7 @@ func (x *UserProfile_Address) String() string {
 func (*UserProfile_Address) ProtoMessage() {}
 
 func (x *UserProfile_Address) ProtoReflect() protoreflect.Message {
-	mi := &file_pbmodel_testdata_test_proto_msgTypes[19]
+	mi := &file_test_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1183,7 +1183,7 @@ func (x *UserProfile_Address) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserProfile_Address.ProtoReflect.Descriptor instead.
 func (*UserProfile_Address) Descriptor() ([]byte, []int) {
-	return file_pbmodel_testdata_test_proto_rawDescGZIP(), []int{9, 0}
+	return file_test_proto_rawDescGZIP(), []int{9, 0}
 }
 
 func (x *UserProfile_Address) GetStreet() string {
@@ -1221,11 +1221,12 @@ func (x *UserProfile_Address) GetCountry() string {
 	return ""
 }
 
-var File_pbmodel_testdata_test_proto protoreflect.FileDescriptor
+var File_test_proto protoreflect.FileDescriptor
 
-const file_pbmodel_testdata_test_proto_rawDesc = "" +
+const file_test_proto_rawDesc = "" +
 	"\n" +
-	"\x1bpbmodel/testdata/test.proto\x12\btestdata\"K\n" +
+	"\n" +
+	"test.proto\x12\btestdata\"K\n" +
 	"\rSimpleMessage\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
@@ -1329,23 +1330,23 @@ const file_pbmodel_testdata_test_proto_rawDesc = "" +
 	"\x06ACTIVE\x10\x02\x12\r\n" +
 	"\tCOMPLETED\x10\x03\x12\n" +
 	"\n" +
-	"\x06FAILED\x10\x04B.Z,github.com/egonelbre/protobuf-compression/pbmodel/testdatab\x06proto3"
+	"\x06FAILED\x10\x04B<Z:github.com/egonelbre/protobuf-compression/pbmodel/testdatab\x06proto3"
 
 var (
-	file_pbmodel_testdata_test_proto_rawDescOnce sync.Once
-	file_pbmodel_testdata_test_proto_rawDescData []byte
+	file_test_proto_rawDescOnce sync.Once
+	file_test_proto_rawDescData []byte
 )
 
-func file_pbmodel_testdata_test_proto_rawDescGZIP() []byte {
-	file_pbmodel_testdata_test_proto_rawDescOnce.Do(func() {
-		file_pbmodel_testdata_test_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_pbmodel_testdata_test_proto_rawDesc), len(file_pbmodel_testdata_test_proto_rawDesc)))
+func file_test_proto_rawDescGZIP() []byte {
+	file_test_proto_rawDescOnce.Do(func() {
+		file_test_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_test_proto_rawDesc), len(file_test_proto_rawDesc)))
 	})
-	return file_pbmodel_testdata_test_proto_rawDescData
+	return file_test_proto_rawDescData
 }
 
-var file_pbmodel_testdata_test_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_pbmodel_testdata_test_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
-var file_pbmodel_testdata_test_proto_goTypes = []any{
+var file_test_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_test_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_test_proto_goTypes = []any{
 	(Status)(0),                                            // 0: testdata.Status
 	(*SimpleMessage)(nil),                                  // 1: testdata.SimpleMessage
 	(*NumericMessage)(nil),                                 // 2: testdata.NumericMessage
@@ -1369,7 +1370,7 @@ var file_pbmodel_testdata_test_proto_goTypes = []any{
 	(*UserProfile_Address)(nil), // 20: testdata.UserProfile.Address
 	nil,                         // 21: testdata.UserProfile.MetadataEntry
 }
-var file_pbmodel_testdata_test_proto_depIdxs = []int32{
+var file_test_proto_depIdxs = []int32{
 	12, // 0: testdata.NestedMessage.inner:type_name -> testdata.NestedMessage.Inner
 	12, // 1: testdata.NestedMessage.inner_list:type_name -> testdata.NestedMessage.Inner
 	13, // 2: testdata.DeepNesting.level1:type_name -> testdata.DeepNesting.Level1
@@ -1390,12 +1391,12 @@ var file_pbmodel_testdata_test_proto_depIdxs = []int32{
 	0,  // [0:13] is the sub-list for field type_name
 }
 
-func init() { file_pbmodel_testdata_test_proto_init() }
-func file_pbmodel_testdata_test_proto_init() {
-	if File_pbmodel_testdata_test_proto != nil {
+func init() { file_test_proto_init() }
+func file_test_proto_init() {
+	if File_test_proto != nil {
 		return
 	}
-	file_pbmodel_testdata_test_proto_msgTypes[6].OneofWrappers = []any{
+	file_test_proto_msgTypes[6].OneofWrappers = []any{
 		(*MessageWithOneof_StringValue)(nil),
 		(*MessageWithOneof_IntValue)(nil),
 		(*MessageWithOneof_BoolValue)(nil),
@@ -1404,18 +1405,18 @@ func file_pbmodel_testdata_test_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pbmodel_testdata_test_proto_rawDesc), len(file_pbmodel_testdata_test_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_test_proto_rawDesc), len(file_test_proto_rawDesc)),
 			NumEnums:      1,
 			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_pbmodel_testdata_test_proto_goTypes,
-		DependencyIndexes: file_pbmodel_testdata_test_proto_depIdxs,
-		EnumInfos:         file_pbmodel_testdata_test_proto_enumTypes,
-		MessageInfos:      file_pbmodel_testdata_test_proto_msgTypes,
+		GoTypes:           file_test_proto_goTypes,
+		DependencyIndexes: file_test_proto_depIdxs,
+		EnumInfos:         file_test_proto_enumTypes,
+		MessageInfos:      file_test_proto_msgTypes,
 	}.Build()
-	File_pbmodel_testdata_test_proto = out.File
-	file_pbmodel_testdata_test_proto_goTypes = nil
-	file_pbmodel_testdata_test_proto_depIdxs = nil
+	File_test_proto = out.File
+	file_test_proto_goTypes = nil
+	file_test_proto_depIdxs = nil
 }

@@ -1884,8 +1884,8 @@ const file_meshtastic_telemetry_proto_rawDesc = "" +
 	"\x05SEN5X\x10+\x12\v\n" +
 	"\aTSL2561\x10,\x12\n" +
 	"\n" +
-	"\x06BH1750\x10-Bz\n" +
-	"\x14org.meshtastic.protoB\x0fTelemetryProtosZ7github.com/egonelbre/protobuf-compression/pbmodel/testdata/meshtastic\xaa\x02\x14Meshtastic.Protobufs\xba\x02\x00b\x06proto3"
+	"\x06BH1750\x10-B\x88\x01\n" +
+	"\x14org.meshtastic.protoB\x0fTelemetryProtosZEgithub.com/egonelbre/protobuf-compression/pbmodel/testdata/meshtastic\xaa\x02\x14Meshtastic.Protobufs\xba\x02\x00b\x06proto3"
 
 var (
 	file_meshtastic_telemetry_proto_rawDescOnce sync.Once
