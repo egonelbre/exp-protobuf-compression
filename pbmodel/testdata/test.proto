@@ -1,0 +1,132 @@
+syntax = "proto3";
+
+package testdata;
+
+option go_package = "github.com/egonelbre/vibing/pbmodel/testdata";
+
+// Simple message with basic field types
+message SimpleMessage {
+  int32 id = 1;
+  string name = 2;
+  bool active = 3;
+}
+
+// Message with various numeric types
+message NumericMessage {
+  int32 int32_field = 1;
+  int64 int64_field = 2;
+  uint32 uint32_field = 3;
+  uint64 uint64_field = 4;
+  sint32 sint32_field = 5;
+  sint64 sint64_field = 6;
+  fixed32 fixed32_field = 7;
+  fixed64 fixed64_field = 8;
+  sfixed32 sfixed32_field = 9;
+  sfixed64 sfixed64_field = 10;
+  float float_field = 11;
+  double double_field = 12;
+}
+
+// Message with repeated fields
+message RepeatedMessage {
+  repeated int32 numbers = 1;
+  repeated string words = 2;
+  repeated bool flags = 3;
+}
+
+// Nested message structure
+message NestedMessage {
+  message Inner {
+    string value = 1;
+    int32 count = 2;
+  }
+
+  Inner inner = 1;
+  repeated Inner inner_list = 2;
+  string outer_field = 3;
+}
+
+// Deeply nested structure
+message DeepNesting {
+  message Level1 {
+    message Level2 {
+      message Level3 {
+        message Level4 {
+          message Level5 {
+            string deep_value = 1;
+            int32 deep_number = 2;
+          }
+          Level5 level5 = 1;
+        }
+        Level4 level4 = 1;
+      }
+      Level3 level3 = 1;
+    }
+    Level2 level2 = 1;
+  }
+  Level1 level1 = 1;
+}
+
+// Message with enum
+enum Status {
+  UNKNOWN = 0;
+  PENDING = 1;
+  ACTIVE = 2;
+  COMPLETED = 3;
+  FAILED = 4;
+}
+
+message MessageWithEnum {
+  Status status = 1;
+  string description = 2;
+}
+
+// Message with oneof
+message MessageWithOneof {
+  oneof value {
+    string string_value = 1;
+    int32 int_value = 2;
+    bool bool_value = 3;
+  }
+  string common_field = 4;
+}
+
+// Message with bytes
+message MessageWithBytes {
+  bytes data = 1;
+  string label = 2;
+}
+
+// Message with map (represented as repeated in proto3)
+message MessageWithMap {
+  map<string, int32> counts = 1;
+  map<int32, string> lookup = 2;
+}
+
+// Complex real-world-like message
+message UserProfile {
+  int64 user_id = 1;
+  string username = 2;
+  string email = 3;
+  string full_name = 4;
+  string bio = 5;
+  repeated string tags = 6;
+  Status account_status = 7;
+  
+  message Address {
+    string street = 1;
+    string city = 2;
+    string state = 3;
+    string zip = 4;
+    string country = 5;
+  }
+  
+  Address address = 8;
+  int64 created_at = 9;
+  int64 updated_at = 10;
+  map<string, string> metadata = 11;
+}
+
+// Empty message
+message EmptyMessage {
+}

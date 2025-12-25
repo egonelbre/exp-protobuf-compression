@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "SlashCommand(/taches-cc-resources:run-prompt 001)",
+      "SlashCommand(/taches-cc-resources:run-prompt:*)"
+    ]
+  }
+}
