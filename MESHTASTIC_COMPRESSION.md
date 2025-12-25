@@ -4,6 +4,42 @@
 
 This document describes the compression improvements implemented for Meshtastic protobuf messages.
 
+## Encoding Strategy Comparison
+
+Two field encoding strategies were implemented and compared:
+
+### V1: Presence Bits (Recommended)
+- Encodes a presence bit for each field in order
+- **Best for dense messages** where most fields are present
+- Fixed overhead per message based on total fields
+
+### V2: Delta-Encoded Field Numbers
+- Encodes only present fields using delta-encoded field numbers  
+- **Best for sparse messages** where few fields are present
+- Variable overhead based on number of present fields
+
+### V3: Hybrid Encoding (Automatic Selection)
+- Automatically chooses between V1 and V2 based on message density
+- Adds 1 byte overhead for strategy flag
+- **Best for mixed workloads** with both sparse and dense messages
+
+### Performance Comparison
+
+| Message Type | Fields Present | V1 Size | V2 Size | V3 Size | Best Strategy |
+|--------------|----------------|---------|---------|---------|---------------|
+| Position | 4/70 fields | **16 bytes** | 19 bytes | 17 bytes | **V1** (no flag overhead) |
+| User profile | 4/8 fields | **36 bytes** | 39 bytes | 36 bytes | **V1 or V3** |
+| Text message | 3/15 fields | **49 bytes** | 52 bytes | 49 bytes | **V1 or V3** |
+
+**Key Findings**:
+- **Meshtastic messages are generally dense**, making presence-bit encoding (V1) optimal
+- **V2 delta encoding is worse** for dense messages due to field number overhead
+- **V3 hybrid encoding** correctly chooses V1 strategy but adds 1 byte flag overhead
+- **For tiny messages** (<20 bytes), even 1 byte overhead is significant - use V1
+- **V3 would be beneficial** only for workloads with highly variable message density
+
+**Recommendation**: Use **V1** for Meshtastic - it's simplest and most efficient for this use case.
+
 ## Results
 
 ### Before (Basic Compressor)

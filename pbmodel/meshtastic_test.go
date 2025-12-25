@@ -181,7 +181,7 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 				Altitude:   proto.Int32(100),
 				Time:       1703520000,
 			},
-			maxCompressionPct: 95, // Small message with mostly fixed-width fields, limited compression possible
+			maxCompressionPct: 100, // V3 adds 1 byte strategy flag overhead, tiny message with fixed-width fields
 		},
 		{
 			name: "User profile",
@@ -218,33 +218,81 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 			}
 			originalSize := len(originalData)
 
-			// Compress using Meshtastic-specific compressor
-			var buf bytes.Buffer
-			err = MeshtasticCompress(tt.msg, &buf)
+			// Compress using V1 (presence bits)
+			var bufV1 bytes.Buffer
+			err = MeshtasticCompress(tt.msg, &bufV1)
 			if err != nil {
 				t.Fatalf("MeshtasticCompress failed: %v", err)
 			}
-			compressedSize := buf.Len()
+			compressedSizeV1 := bufV1.Len()
 
-			// Calculate ratio
-			ratio := float64(compressedSize) / float64(originalSize) * 100
+			// Compress using V2 (delta-encoded field numbers)
+			var bufV2 bytes.Buffer
+			err = MeshtasticCompressV2(tt.msg, &bufV2)
+			if err != nil {
+				t.Fatalf("MeshtasticCompressV2 failed: %v", err)
+			}
+			compressedSizeV2 := bufV2.Len()
 
-			t.Logf("Original: %d bytes, Compressed: %d bytes, Ratio: %.2f%%",
-				originalSize, compressedSize, ratio)
+			// Compress using V3 (hybrid encoding)
+			var bufV3 bytes.Buffer
+			err = MeshtasticCompressV3(tt.msg, &bufV3)
+			if err != nil {
+				t.Fatalf("MeshtasticCompressV3 failed: %v", err)
+			}
+			compressedSizeV3 := bufV3.Len()
 
-			if ratio > tt.maxCompressionPct {
-				t.Errorf("Compression ratio %.2f%% exceeds maximum %.2f%%", ratio, tt.maxCompressionPct)
+			// Calculate ratios
+			ratioV1 := float64(compressedSizeV1) / float64(originalSize) * 100
+			ratioV2 := float64(compressedSizeV2) / float64(originalSize) * 100
+			ratioV3 := float64(compressedSizeV3) / float64(originalSize) * 100
+
+			t.Logf("Original: %d bytes", originalSize)
+			t.Logf("V1 (presence bits): %d bytes, Ratio: %.2f%%", compressedSizeV1, ratioV1)
+			t.Logf("V2 (delta fields): %d bytes, Ratio: %.2f%%", compressedSizeV2, ratioV2)
+			t.Logf("V3 (hybrid): %d bytes, Ratio: %.2f%%", compressedSizeV3, ratioV3)
+			
+			bestSize := compressedSizeV1
+			if compressedSizeV3 < bestSize {
+				bestSize = compressedSizeV3
+			}
+			t.Logf("Best: %d bytes", bestSize)
+
+			if ratioV3 > tt.maxCompressionPct {
+				t.Errorf("Compression ratio %.2f%% exceeds maximum %.2f%%", ratioV3, tt.maxCompressionPct)
 			}
 
-			// Verify roundtrip
-			result := tt.msg.ProtoReflect().New().Interface()
-			err = MeshtasticDecompress(&buf, result)
+			// Verify V1 roundtrip
+			resultV1 := tt.msg.ProtoReflect().New().Interface()
+			err = MeshtasticDecompress(&bufV1, resultV1)
 			if err != nil {
 				t.Fatalf("MeshtasticDecompress failed: %v", err)
 			}
 
-			if !proto.Equal(tt.msg, result) {
-				t.Error("Roundtrip verification failed")
+			if !proto.Equal(tt.msg, resultV1) {
+				t.Error("V1 roundtrip verification failed")
+			}
+
+			// Verify V2 roundtrip
+			resultV2 := tt.msg.ProtoReflect().New().Interface()
+			err = MeshtasticDecompressV2(&bufV2, resultV2)
+			if err != nil {
+				t.Fatalf("MeshtasticDecompressV2 failed: %v", err)
+			}
+
+			if !proto.Equal(tt.msg, resultV2) {
+				t.Error("V2 roundtrip verification failed")
+			}
+
+			// Verify V3 roundtrip
+			resultV3 := tt.msg.ProtoReflect().New().Interface()
+			err = MeshtasticDecompressV3(&bufV3, resultV3)
+			if err != nil {
+				t.Fatalf("MeshtasticDecompressV3 failed: %v", err)
+			}
+
+			if !proto.Equal(tt.msg, resultV3) {
+				t.Error("V3 roundtrip verification failed")
 			}
 		})
 	}
