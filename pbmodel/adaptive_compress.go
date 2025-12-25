@@ -1,6 +1,7 @@
 package pbmodel
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -282,20 +283,21 @@ func adaptiveCompressFieldValue(fieldPath string, fd protoreflect.FieldDescripto
 		return nil
 
 	case protoreflect.StringKind:
-		// Encode string length then bytes
+		// Use the English model for strings
 		str := value.String()
-		strBytes := []byte(str)
-
-		// Encode length
-		lengthBytes := encodeVarint(uint64(len(strBytes)))
+		var buf bytes.Buffer
+		if err := arithcode.EncodeString(str, &buf); err != nil {
+			return err
+		}
+		// Encode the compressed string bytes
+		compressedBytes := buf.Bytes()
+		lengthBytes := encodeVarint(uint64(len(compressedBytes)))
 		for _, b := range lengthBytes {
 			if err := enc.Encode(int(b), amb.byteModel); err != nil {
 				return err
 			}
 		}
-
-		// Encode string bytes
-		for _, b := range strBytes {
+		for _, b := range compressedBytes {
 			if err := enc.Encode(int(b), amb.byteModel); err != nil {
 				return err
 			}

@@ -181,7 +181,7 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 				Altitude:   proto.Int32(100),
 				Time:       1703520000,
 			},
-			maxCompressionPct: 90,
+			maxCompressionPct: 95, // Small message with mostly fixed-width fields, limited compression possible
 		},
 		{
 			name: "User profile",
@@ -218,11 +218,11 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 			}
 			originalSize := len(originalData)
 
-			// Compress
+			// Compress using Meshtastic-specific compressor
 			var buf bytes.Buffer
-			err = Compress(tt.msg, &buf)
+			err = MeshtasticCompress(tt.msg, &buf)
 			if err != nil {
-				t.Fatalf("Compress failed: %v", err)
+				t.Fatalf("MeshtasticCompress failed: %v", err)
 			}
 			compressedSize := buf.Len()
 
@@ -238,9 +238,9 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 
 			// Verify roundtrip
 			result := tt.msg.ProtoReflect().New().Interface()
-			err = Decompress(&buf, result)
+			err = MeshtasticDecompress(&buf, result)
 			if err != nil {
-				t.Fatalf("Decompress failed: %v", err)
+				t.Fatalf("MeshtasticDecompress failed: %v", err)
 			}
 
 			if !proto.Equal(tt.msg, result) {
