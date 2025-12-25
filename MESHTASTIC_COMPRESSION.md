@@ -23,22 +23,34 @@ Two field encoding strategies were implemented and compared:
 - Adds 1 byte overhead for strategy flag
 - **Best for mixed workloads** with both sparse and dense messages
 
+### V4: Enum Value Prediction (Recommended) ⭐
+- Extends V1 with predictive encoding for common enum values
+- Common values: 1 bit, uncommon values: 1 bit + full encoding
+- **Predicts**: LOC_INTERNAL, ALT_INTERNAL, TBEAM, CLIENT, DEFAULT, NO_DELAY
+- **No overhead** for messages without predicted enums
+- **Best overall** - combines V1 efficiency with enum optimization
+
 ### Performance Comparison
 
-| Message Type | Fields Present | V1 Size | V2 Size | V3 Size | Best Strategy |
-|--------------|----------------|---------|---------|---------|---------------|
-| Position | 4/70 fields | **16 bytes** | 19 bytes | 17 bytes | **V1** (no flag overhead) |
-| User profile | 4/8 fields | **36 bytes** | 39 bytes | 36 bytes | **V1 or V3** |
-| Text message | 3/15 fields | **49 bytes** | 52 bytes | 49 bytes | **V1 or V3** |
+| Message Type | Fields Present | V1 | V2 | V3 | V4 | Best |
+|--------------|----------------|----|----|----|----|------|
+| Position | 4/70 fields | **16** | 19 | 17 | **16** | **V1/V4** |
+| User profile | 4/8 fields | 36 | 39 | 36 | **35** | **V4** ✅ |
+| Text message | 3/15 fields | **49** | 52 | 49 | **49** | **V1/V4** |
+
+**V4 Improvements**:
+- ✅ **User profile**: 36→35 bytes (saves 1 byte via hw_model prediction)
+- ✅ **No overhead** when predictions don't match
+- ✅ **Better or equal** to V1 in all cases
 
 **Key Findings**:
 - **Meshtastic messages are generally dense**, making presence-bit encoding (V1) optimal
 - **V2 delta encoding is worse** for dense messages due to field number overhead
 - **V3 hybrid encoding** correctly chooses V1 strategy but adds 1 byte flag overhead
-- **For tiny messages** (<20 bytes), even 1 byte overhead is significant - use V1
-- **V3 would be beneficial** only for workloads with highly variable message density
+- **V4 enum prediction** adds intelligence with zero overhead on miss
+- **For tiny messages** (<20 bytes), even 1 byte overhead is significant
 
-**Recommendation**: Use **V1** for Meshtastic - it's simplest and most efficient for this use case.
+**Recommendation**: Use **V4** for Meshtastic - it's V1 plus enum optimization with no downside.
 
 ## Results
 

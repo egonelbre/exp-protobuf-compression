@@ -242,24 +242,34 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 			}
 			compressedSizeV3 := bufV3.Len()
 
+			// Compress using V4 (enum prediction)
+			var bufV4 bytes.Buffer
+			err = MeshtasticCompressV4(tt.msg, &bufV4)
+			if err != nil {
+				t.Fatalf("MeshtasticCompressV4 failed: %v", err)
+			}
+			compressedSizeV4 := bufV4.Len()
+
 			// Calculate ratios
 			ratioV1 := float64(compressedSizeV1) / float64(originalSize) * 100
 			ratioV2 := float64(compressedSizeV2) / float64(originalSize) * 100
 			ratioV3 := float64(compressedSizeV3) / float64(originalSize) * 100
+			ratioV4 := float64(compressedSizeV4) / float64(originalSize) * 100
 
 			t.Logf("Original: %d bytes", originalSize)
 			t.Logf("V1 (presence bits): %d bytes, Ratio: %.2f%%", compressedSizeV1, ratioV1)
 			t.Logf("V2 (delta fields): %d bytes, Ratio: %.2f%%", compressedSizeV2, ratioV2)
 			t.Logf("V3 (hybrid): %d bytes, Ratio: %.2f%%", compressedSizeV3, ratioV3)
+			t.Logf("V4 (enum prediction): %d bytes, Ratio: %.2f%%", compressedSizeV4, ratioV4)
 			
 			bestSize := compressedSizeV1
-			if compressedSizeV3 < bestSize {
-				bestSize = compressedSizeV3
+			if compressedSizeV4 < bestSize {
+				bestSize = compressedSizeV4
 			}
-			t.Logf("Best: %d bytes", bestSize)
+			t.Logf("Best: %d bytes (V4 saves %d bytes vs V1)", bestSize, compressedSizeV1-bestSize)
 
-			if ratioV3 > tt.maxCompressionPct {
-				t.Errorf("Compression ratio %.2f%% exceeds maximum %.2f%%", ratioV3, tt.maxCompressionPct)
+			if ratioV4 > tt.maxCompressionPct {
+				t.Errorf("Compression ratio %.2f%% exceeds maximum %.2f%%", ratioV4, tt.maxCompressionPct)
 			}
 
 			// Verify V1 roundtrip
@@ -293,6 +303,17 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 
 			if !proto.Equal(tt.msg, resultV3) {
 				t.Error("V3 roundtrip verification failed")
+			}
+
+			// Verify V4 roundtrip
+			resultV4 := tt.msg.ProtoReflect().New().Interface()
+			err = MeshtasticDecompressV4(&bufV4, resultV4)
+			if err != nil {
+				t.Fatalf("MeshtasticDecompressV4 failed: %v", err)
+			}
+
+			if !proto.Equal(tt.msg, resultV4) {
+				t.Error("V4 roundtrip verification failed")
 			}
 		})
 	}
