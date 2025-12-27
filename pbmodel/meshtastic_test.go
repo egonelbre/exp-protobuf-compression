@@ -250,26 +250,36 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 			}
 			compressedSizeV4 := bufV4.Len()
 
+			// Compress using V5 (context-aware models)
+			var bufV5 bytes.Buffer
+			err = MeshtasticCompressV5(tt.msg, &bufV5)
+			if err != nil {
+				t.Fatalf("MeshtasticCompressV5 failed: %v", err)
+			}
+			compressedSizeV5 := bufV5.Len()
+
 			// Calculate ratios
 			ratioV1 := float64(compressedSizeV1) / float64(originalSize) * 100
 			ratioV2 := float64(compressedSizeV2) / float64(originalSize) * 100
 			ratioV3 := float64(compressedSizeV3) / float64(originalSize) * 100
 			ratioV4 := float64(compressedSizeV4) / float64(originalSize) * 100
+			ratioV5 := float64(compressedSizeV5) / float64(originalSize) * 100
 
 			t.Logf("Original: %d bytes", originalSize)
 			t.Logf("V1 (presence bits): %d bytes, Ratio: %.2f%%", compressedSizeV1, ratioV1)
 			t.Logf("V2 (delta fields): %d bytes, Ratio: %.2f%%", compressedSizeV2, ratioV2)
 			t.Logf("V3 (hybrid): %d bytes, Ratio: %.2f%%", compressedSizeV3, ratioV3)
 			t.Logf("V4 (enum prediction): %d bytes, Ratio: %.2f%%", compressedSizeV4, ratioV4)
+			t.Logf("V5 (context-aware): %d bytes, Ratio: %.2f%%", compressedSizeV5, ratioV5)
 			
 			bestSize := compressedSizeV1
-			if compressedSizeV4 < bestSize {
-				bestSize = compressedSizeV4
+			if compressedSizeV5 < bestSize {
+				bestSize = compressedSizeV5
 			}
-			t.Logf("Best: %d bytes (V4 saves %d bytes vs V1)", bestSize, compressedSizeV1-bestSize)
+			t.Logf("Best: %d bytes (V5 saves %d bytes vs V1)", bestSize, compressedSizeV1-bestSize)
 
-			if ratioV4 > tt.maxCompressionPct {
-				t.Errorf("Compression ratio %.2f%% exceeds maximum %.2f%%", ratioV4, tt.maxCompressionPct)
+			if ratioV5 > tt.maxCompressionPct {
+				t.Errorf("Compression ratio %.2f%% exceeds maximum %.2f%%", ratioV5, tt.maxCompressionPct)
 			}
 
 			// Verify V1 roundtrip
@@ -314,6 +324,113 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 
 			if !proto.Equal(tt.msg, resultV4) {
 				t.Error("V4 roundtrip verification failed")
+			}
+
+			// Verify V5 roundtrip
+			resultV5 := tt.msg.ProtoReflect().New().Interface()
+			err = MeshtasticDecompressV5(&bufV5, resultV5)
+			if err != nil {
+				t.Fatalf("MeshtasticDecompressV5 failed: %v", err)
+			}
+
+			if !proto.Equal(tt.msg, resultV5) {
+				t.Error("V5 roundtrip verification failed")
+			}
+		})
+	}
+}
+
+// TestMeshtasticV5ContextAwareness tests V5 context-aware models with varied data
+func TestMeshtasticV5ContextAwareness(t *testing.T) {
+	tests := []struct {
+		name string
+		msg  proto.Message
+	}{
+		{
+			name: "Position with typical GPS data",
+			msg: &meshtastic.Position{
+				LatitudeI:      proto.Int32(375317890),
+				LongitudeI:     proto.Int32(-1223898570),
+				Altitude:       proto.Int32(150), // Small altitude value
+				Time:           1703520000,
+				SatsInView:     8,                // Typical satellite count
+				GpsAccuracy:    5,                // Good accuracy
+				PDOP:           120,              // Good DOP
+				HDOP:           90,
+				VDOP:           100,
+				GroundSpeed:    proto.Uint32(25), // Moderate speed
+				PrecisionBits:  8,
+			},
+		},
+		{
+			name: "Telemetry with typical battery and signal",
+			msg: &meshtastic.Telemetry{
+				Time: 1703520000,
+				Variant: &meshtastic.Telemetry_DeviceMetrics{
+					DeviceMetrics: &meshtastic.DeviceMetrics{
+						BatteryLevel:       proto.Uint32(75),     // Mid-high battery
+						Voltage:            proto.Float32(4.1),
+						ChannelUtilization: proto.Float32(15.5),  // Low utilization
+						AirUtilTx:          proto.Float32(5.2),
+						UptimeSeconds:      proto.Uint32(86400),
+					},
+				},
+			},
+		},
+		{
+			name: "MeshPacket with typical hop count and signal",
+			msg: &meshtastic.MeshPacket{
+				From:     123456789,
+				To:       987654321,
+				Channel:  0, // Default channel
+				HopLimit: 3, // Typical hop limit
+				RxRssi:   -85, // Typical RSSI
+				RxSnr:    7.5,
+				Priority: meshtastic.MeshPacket_DEFAULT,
+				Delayed:  meshtastic.MeshPacket_NO_DELAY,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			originalData, err := proto.Marshal(tt.msg)
+			if err != nil {
+				t.Fatalf("Failed to marshal: %v", err)
+			}
+			originalSize := len(originalData)
+
+			// Compress with V1
+			var bufV1 bytes.Buffer
+			if err := MeshtasticCompress(tt.msg, &bufV1); err != nil {
+				t.Fatalf("V1 compress failed: %v", err)
+			}
+
+			// Compress with V5
+			var bufV5 bytes.Buffer
+			if err := MeshtasticCompressV5(tt.msg, &bufV5); err != nil {
+				t.Fatalf("V5 compress failed: %v", err)
+			}
+
+			ratioV1 := float64(bufV1.Len()) / float64(originalSize) * 100
+			ratioV5 := float64(bufV5.Len()) / float64(originalSize) * 100
+			improvement := bufV1.Len() - bufV5.Len()
+
+			t.Logf("Original: %d bytes", originalSize)
+			t.Logf("V1: %d bytes (%.2f%%)", bufV1.Len(), ratioV1)
+			t.Logf("V5: %d bytes (%.2f%%)", bufV5.Len(), ratioV5)
+			if improvement > 0 {
+				t.Logf("V5 improvement: %d bytes (%.2f%% reduction)", improvement, float64(improvement)/float64(bufV1.Len())*100)
+			}
+
+			// Verify roundtrip
+			result := tt.msg.ProtoReflect().New().Interface()
+			if err := MeshtasticDecompressV5(&bufV5, result); err != nil {
+				t.Fatalf("V5 decompress failed: %v", err)
+			}
+
+			if !proto.Equal(tt.msg, result) {
+				t.Error("V5 roundtrip verification failed")
 			}
 		})
 	}
