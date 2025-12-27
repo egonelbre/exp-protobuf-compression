@@ -283,10 +283,30 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 			t.Logf("V6 (bit-packed bools): %d bytes, Ratio: %.2f%%", compressedSizeV6, ratioV6)
 			
 			bestSize := compressedSizeV1
+			bestVersion := "V1"
+			
+			if compressedSizeV2 < bestSize {
+				bestSize = compressedSizeV2
+				bestVersion = "V2"
+			}
+			if compressedSizeV3 < bestSize {
+				bestSize = compressedSizeV3
+				bestVersion = "V3"
+			}
+			if compressedSizeV4 < bestSize {
+				bestSize = compressedSizeV4
+				bestVersion = "V4"
+			}
+			if compressedSizeV5 < bestSize {
+				bestSize = compressedSizeV5
+				bestVersion = "V5"
+			}
 			if compressedSizeV6 < bestSize {
 				bestSize = compressedSizeV6
+				bestVersion = "V6"
 			}
-			t.Logf("Best: %d bytes (V6 saves %d bytes vs V1)", bestSize, compressedSizeV1-bestSize)
+			
+			t.Logf("Best: %d bytes (%s saves %d bytes vs V1)", bestSize, bestVersion, compressedSizeV1-bestSize)
 
 			if ratioV6 > tt.maxCompressionPct {
 				t.Errorf("Compression ratio %.2f%% exceeds maximum %.2f%%", ratioV6, tt.maxCompressionPct)
