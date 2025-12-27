@@ -258,12 +258,21 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 			}
 			compressedSizeV5 := bufV5.Len()
 
+			// Compress using V6 (bit-packed booleans)
+			var bufV6 bytes.Buffer
+			err = MeshtasticCompressV6(tt.msg, &bufV6)
+			if err != nil {
+				t.Fatalf("MeshtasticCompressV6 failed: %v", err)
+			}
+			compressedSizeV6 := bufV6.Len()
+
 			// Calculate ratios
 			ratioV1 := float64(compressedSizeV1) / float64(originalSize) * 100
 			ratioV2 := float64(compressedSizeV2) / float64(originalSize) * 100
 			ratioV3 := float64(compressedSizeV3) / float64(originalSize) * 100
 			ratioV4 := float64(compressedSizeV4) / float64(originalSize) * 100
 			ratioV5 := float64(compressedSizeV5) / float64(originalSize) * 100
+			ratioV6 := float64(compressedSizeV6) / float64(originalSize) * 100
 
 			t.Logf("Original: %d bytes", originalSize)
 			t.Logf("V1 (presence bits): %d bytes, Ratio: %.2f%%", compressedSizeV1, ratioV1)
@@ -271,15 +280,16 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 			t.Logf("V3 (hybrid): %d bytes, Ratio: %.2f%%", compressedSizeV3, ratioV3)
 			t.Logf("V4 (enum prediction): %d bytes, Ratio: %.2f%%", compressedSizeV4, ratioV4)
 			t.Logf("V5 (context-aware): %d bytes, Ratio: %.2f%%", compressedSizeV5, ratioV5)
+			t.Logf("V6 (bit-packed bools): %d bytes, Ratio: %.2f%%", compressedSizeV6, ratioV6)
 			
 			bestSize := compressedSizeV1
-			if compressedSizeV5 < bestSize {
-				bestSize = compressedSizeV5
+			if compressedSizeV6 < bestSize {
+				bestSize = compressedSizeV6
 			}
-			t.Logf("Best: %d bytes (V5 saves %d bytes vs V1)", bestSize, compressedSizeV1-bestSize)
+			t.Logf("Best: %d bytes (V6 saves %d bytes vs V1)", bestSize, compressedSizeV1-bestSize)
 
-			if ratioV5 > tt.maxCompressionPct {
-				t.Errorf("Compression ratio %.2f%% exceeds maximum %.2f%%", ratioV5, tt.maxCompressionPct)
+			if ratioV6 > tt.maxCompressionPct {
+				t.Errorf("Compression ratio %.2f%% exceeds maximum %.2f%%", ratioV6, tt.maxCompressionPct)
 			}
 
 			// Verify V1 roundtrip
@@ -335,6 +345,94 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 
 			if !proto.Equal(tt.msg, resultV5) {
 				t.Error("V5 roundtrip verification failed")
+			}
+
+			// Verify V6 roundtrip
+			resultV6 := tt.msg.ProtoReflect().New().Interface()
+			err = MeshtasticDecompressV6(&bufV6, resultV6)
+			if err != nil {
+				t.Fatalf("MeshtasticDecompressV6 failed: %v", err)
+			}
+
+			if !proto.Equal(tt.msg, resultV6) {
+				t.Error("V6 roundtrip verification failed")
+			}
+		})
+	}
+}
+
+// TestMeshtasticV6BitPacking tests V6 bit packing for boolean clusters
+func TestMeshtasticV6BitPacking(t *testing.T) {
+	tests := []struct {
+		name string
+		msg  proto.Message
+	}{
+		{
+			name: "MeshPacket with multiple booleans",
+			msg: &meshtastic.MeshPacket{
+				From:         123456789,
+				To:           987654321,
+				Channel:      0,
+				WantAck:      true,
+				ViaMqtt:      false,
+				PkiEncrypted: false,
+				HopLimit:     3,
+				Priority:     meshtastic.MeshPacket_DEFAULT,
+			},
+		},
+		{
+			name: "User with boolean flags",
+			msg: &meshtastic.User{
+				Id:           "!12345678",
+				LongName:     "Test Node",
+				ShortName:    "TEST",
+				IsLicensed:   false,
+				HwModel:      meshtastic.HardwareModel_TBEAM,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			originalData, err := proto.Marshal(tt.msg)
+			if err != nil {
+				t.Fatalf("Failed to marshal: %v", err)
+			}
+			originalSize := len(originalData)
+
+			// Compress with V1
+			var bufV1 bytes.Buffer
+			if err := MeshtasticCompress(tt.msg, &bufV1); err != nil {
+				t.Fatalf("V1 compress failed: %v", err)
+			}
+
+			// Compress with V6
+			var bufV6 bytes.Buffer
+			if err := MeshtasticCompressV6(tt.msg, &bufV6); err != nil {
+				t.Fatalf("V6 compress failed: %v", err)
+			}
+
+			ratioV1 := float64(bufV1.Len()) / float64(originalSize) * 100
+			ratioV6 := float64(bufV6.Len()) / float64(originalSize) * 100
+			improvement := bufV1.Len() - bufV6.Len()
+
+			t.Logf("Original: %d bytes", originalSize)
+			t.Logf("V1: %d bytes (%.2f%%)", bufV1.Len(), ratioV1)
+			t.Logf("V6: %d bytes (%.2f%%)", bufV6.Len(), ratioV6)
+			if improvement > 0 {
+				t.Logf("V6 improvement: %d bytes (%.2f%% reduction)", improvement, float64(improvement)/float64(bufV1.Len())*100)
+			} else if improvement < 0 {
+				t.Logf("V6 overhead: %d bytes", -improvement)
+			}
+
+			// Verify roundtrip
+			result := tt.msg.ProtoReflect().New().Interface()
+			if err := MeshtasticDecompressV6(&bufV6, result); err != nil {
+				t.Fatalf("V6 decompress failed: %v", err)
+			}
+
+			if !proto.Equal(tt.msg, result) {
+				t.Error("V6 roundtrip verification failed")
 			}
 		})
 	}
