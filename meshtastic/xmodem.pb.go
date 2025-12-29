@@ -173,8 +173,8 @@ const file_meshtastic_xmodem_proto_rawDesc = "" +
 	"\x03ACK\x10\x06\x12\a\n" +
 	"\x03NAK\x10\x15\x12\a\n" +
 	"\x03CAN\x10\x18\x12\t\n" +
-	"\x05CTRLZ\x10\x1aB\xaf\x01\n" +
-	"\x0ecom.meshtasticB\vXmodemProtoP\x01ZEgithub.com/egonelbre/protobuf-compression/pbmodel/testdata/meshtastic\xa2\x02\x03MXX\xaa\x02\n" +
+	"\x05CTRLZ\x10\x1aB\xa2\x01\n" +
+	"\x0ecom.meshtasticB\vXmodemProtoP\x01Z8github.com/egonelbre/exp-protobuf-compression/meshtastic\xa2\x02\x03MXX\xaa\x02\n" +
 	"Meshtastic\xba\x02\x00\xca\x02\n" +
 	"Meshtastic\xe2\x02\x16Meshtastic\\GPBMetadata\xea\x02\n" +
 	"Meshtasticb\x06proto3"

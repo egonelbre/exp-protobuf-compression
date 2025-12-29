@@ -376,8 +376,8 @@ const file_meshtastic_channel_proto_rawDesc = "" +
 	"\x04Role\x12\f\n" +
 	"\bDISABLED\x10\x00\x12\v\n" +
 	"\aPRIMARY\x10\x01\x12\r\n" +
-	"\tSECONDARY\x10\x02B\xb0\x01\n" +
-	"\x0ecom.meshtasticB\fChannelProtoP\x01ZEgithub.com/egonelbre/protobuf-compression/pbmodel/testdata/meshtastic\xa2\x02\x03MXX\xaa\x02\n" +
+	"\tSECONDARY\x10\x02B\xa3\x01\n" +
+	"\x0ecom.meshtasticB\fChannelProtoP\x01Z8github.com/egonelbre/exp-protobuf-compression/meshtastic\xa2\x02\x03MXX\xaa\x02\n" +
 	"Meshtastic\xba\x02\x00\xca\x02\n" +
 	"Meshtastic\xe2\x02\x16Meshtastic\\GPBMetadata\xea\x02\n" +
 	"Meshtasticb\x06proto3"

@@ -1,10 +1,18 @@
 # buf.gen.yaml defines how to generate code.
 version: v2
+# Generate code for both our module and dependencies
+inputs:
+  - directory: pbmodel/testdata
+  - module: buf.build/meshtastic/protobufs
 plugins:
   # Generate Go code
   - remote: buf.build/protocolbuffers/go
-    out: .
-    opt:
-      - paths=source_relative
+    out: gen
+    opt: paths=import
 managed:
   enabled: true
+  override:
+    # Override meshtastic package to match our local import path
+    - file_option: go_package_prefix
+      module: buf.build/meshtastic/protobufs
+      value: github.com/egonelbre/exp-protobuf-compression

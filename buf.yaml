@@ -1,7 +1,9 @@
 # buf.yaml defines a module.
 version: v2
 modules:
-  - path: .
+  - path: pbmodel/testdata
+deps:
+  - buf.build/meshtastic/protobufs
 lint:
   use:
     - STANDARD

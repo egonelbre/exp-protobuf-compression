@@ -1885,8 +1885,8 @@ const file_meshtastic_telemetry_proto_rawDesc = "" +
 	"\x05SEN5X\x10+\x12\v\n" +
 	"\aTSL2561\x10,\x12\n" +
 	"\n" +
-	"\x06BH1750\x10-B\xb2\x01\n" +
-	"\x0ecom.meshtasticB\x0eTelemetryProtoP\x01ZEgithub.com/egonelbre/protobuf-compression/pbmodel/testdata/meshtastic\xa2\x02\x03MXX\xaa\x02\n" +
+	"\x06BH1750\x10-B\xa5\x01\n" +
+	"\x0ecom.meshtasticB\x0eTelemetryProtoP\x01Z8github.com/egonelbre/exp-protobuf-compression/meshtastic\xa2\x02\x03MXX\xaa\x02\n" +
 	"Meshtastic\xba\x02\x00\xca\x02\n" +
 	"Meshtastic\xe2\x02\x16Meshtastic\\GPBMetadata\xea\x02\n" +
 	"Meshtasticb\x06proto3"

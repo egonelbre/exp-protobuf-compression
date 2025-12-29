@@ -2490,8 +2490,8 @@ const file_meshtastic_module_config_proto_rawDesc = "" +
 	"\x15RemoteHardwarePinType\x12\v\n" +
 	"\aUNKNOWN\x10\x00\x12\x10\n" +
 	"\fDIGITAL_READ\x10\x01\x12\x11\n" +
-	"\rDIGITAL_WRITE\x10\x02B\xb5\x01\n" +
-	"\x0ecom.meshtasticB\x11ModuleConfigProtoP\x01ZEgithub.com/egonelbre/protobuf-compression/pbmodel/testdata/meshtastic\xa2\x02\x03MXX\xaa\x02\n" +
+	"\rDIGITAL_WRITE\x10\x02B\xa8\x01\n" +
+	"\x0ecom.meshtasticB\x11ModuleConfigProtoP\x01Z8github.com/egonelbre/exp-protobuf-compression/meshtastic\xa2\x02\x03MXX\xaa\x02\n" +
 	"Meshtastic\xba\x02\x00\xca\x02\n" +
 	"Meshtastic\xe2\x02\x16Meshtastic\\GPBMetadata\xea\x02\n" +
 	"Meshtasticb\x06proto3"

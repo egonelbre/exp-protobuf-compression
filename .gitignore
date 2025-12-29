@@ -1,0 +1,5 @@
+# Buf generated files temporary directory
+gen/
+
+# Generated from buf.build dependencies
+nanopb.pb.go

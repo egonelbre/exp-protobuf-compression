@@ -2878,8 +2878,8 @@ const file_meshtastic_config_proto_rawDesc = "" +
 	"\x15debug_log_api_enabled\x18\x06 \x01(\bR\x12debugLogApiEnabled\x122\n" +
 	"\x15admin_channel_enabled\x18\b \x01(\bR\x13adminChannelEnabled\x1a\x12\n" +
 	"\x10SessionkeyConfigB\x11\n" +
-	"\x0fpayload_variantB\xaf\x01\n" +
-	"\x0ecom.meshtasticB\vConfigProtoP\x01ZEgithub.com/egonelbre/protobuf-compression/pbmodel/testdata/meshtastic\xa2\x02\x03MXX\xaa\x02\n" +
+	"\x0fpayload_variantB\xa2\x01\n" +
+	"\x0ecom.meshtasticB\vConfigProtoP\x01Z8github.com/egonelbre/exp-protobuf-compression/meshtastic\xa2\x02\x03MXX\xaa\x02\n" +
 	"Meshtastic\xba\x02\x00\xca\x02\n" +
 	"Meshtastic\xe2\x02\x16Meshtastic\\GPBMetadata\xea\x02\n" +
 	"Meshtasticb\x06proto3"

@@ -945,8 +945,8 @@ const file_meshtastic_device_ui_proto_rawDesc = "" +
 	"\n" +
 	"\x06DANISH\x10\x13\x12\x16\n" +
 	"\x12SIMPLIFIED_CHINESE\x10\x1e\x12\x17\n" +
-	"\x13TRADITIONAL_CHINESE\x10\x1fB\xb1\x01\n" +
-	"\x0ecom.meshtasticB\rDeviceUiProtoP\x01ZEgithub.com/egonelbre/protobuf-compression/pbmodel/testdata/meshtastic\xa2\x02\x03MXX\xaa\x02\n" +
+	"\x13TRADITIONAL_CHINESE\x10\x1fB\xa4\x01\n" +
+	"\x0ecom.meshtasticB\rDeviceUiProtoP\x01Z8github.com/egonelbre/exp-protobuf-compression/meshtastic\xa2\x02\x03MXX\xaa\x02\n" +
 	"Meshtastic\xba\x02\x00\xca\x02\n" +
 	"Meshtastic\xe2\x02\x16Meshtastic\\GPBMetadata\xea\x02\n" +
 	"Meshtasticb\x06proto3"

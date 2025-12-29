@@ -309,8 +309,8 @@ const file_meshtastic_portnums_proto_rawDesc = "" +
 	"\vCAYENNE_APP\x10M\x12\x10\n" +
 	"\vPRIVATE_APP\x10\x80\x02\x12\x13\n" +
 	"\x0eATAK_FORWARDER\x10\x81\x02\x12\b\n" +
-	"\x03MAX\x10\xff\x03B\xb1\x01\n" +
-	"\x0ecom.meshtasticB\rPortnumsProtoP\x01ZEgithub.com/egonelbre/protobuf-compression/pbmodel/testdata/meshtastic\xa2\x02\x03MXX\xaa\x02\n" +
+	"\x03MAX\x10\xff\x03B\xa4\x01\n" +
+	"\x0ecom.meshtasticB\rPortnumsProtoP\x01Z8github.com/egonelbre/exp-protobuf-compression/meshtastic\xa2\x02\x03MXX\xaa\x02\n" +
 	"Meshtastic\xba\x02\x00\xca\x02\n" +
 	"Meshtastic\xe2\x02\x16Meshtastic\\GPBMetadata\xea\x02\n" +
 	"Meshtasticb\x06proto3"

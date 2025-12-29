@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package testdata;
 
-option go_package = "github.com/egonelbre/protobuf-compression/pbmodel/testdata";
+option go_package = "github.com/egonelbre/exp-protobuf-compression/pbmodel/testdata";
 
 // Simple message with basic field types
 message SimpleMessage {
