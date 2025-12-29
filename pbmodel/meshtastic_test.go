@@ -266,6 +266,14 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 			}
 			compressedSizeV6 := bufV6.Len()
 
+			// Compress using V7 (field-specific boolean models)
+			var bufV7 bytes.Buffer
+			err = MeshtasticCompressV7(tt.msg, &bufV7)
+			if err != nil {
+				t.Fatalf("MeshtasticCompressV7 failed: %v", err)
+			}
+			compressedSizeV7 := bufV7.Len()
+
 			// Calculate ratios
 			ratioV1 := float64(compressedSizeV1) / float64(originalSize) * 100
 			ratioV2 := float64(compressedSizeV2) / float64(originalSize) * 100
@@ -273,6 +281,7 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 			ratioV4 := float64(compressedSizeV4) / float64(originalSize) * 100
 			ratioV5 := float64(compressedSizeV5) / float64(originalSize) * 100
 			ratioV6 := float64(compressedSizeV6) / float64(originalSize) * 100
+			ratioV7 := float64(compressedSizeV7) / float64(originalSize) * 100
 
 			t.Logf("Original: %d bytes", originalSize)
 			t.Logf("V1 (presence bits): %d bytes, Ratio: %.2f%%", compressedSizeV1, ratioV1)
@@ -281,10 +290,11 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 			t.Logf("V4 (enum prediction): %d bytes, Ratio: %.2f%%", compressedSizeV4, ratioV4)
 			t.Logf("V5 (context-aware): %d bytes, Ratio: %.2f%%", compressedSizeV5, ratioV5)
 			t.Logf("V6 (bit-packed bools): %d bytes, Ratio: %.2f%%", compressedSizeV6, ratioV6)
-			
+			t.Logf("V7 (boolean models): %d bytes, Ratio: %.2f%%", compressedSizeV7, ratioV7)
+
 			bestSize := compressedSizeV1
 			bestVersion := "V1"
-			
+
 			if compressedSizeV2 < bestSize {
 				bestSize = compressedSizeV2
 				bestVersion = "V2"
@@ -305,11 +315,15 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 				bestSize = compressedSizeV6
 				bestVersion = "V6"
 			}
-			
+			if compressedSizeV7 < bestSize {
+				bestSize = compressedSizeV7
+				bestVersion = "V7"
+			}
+
 			t.Logf("Best: %d bytes (%s saves %d bytes vs V1)", bestSize, bestVersion, compressedSizeV1-bestSize)
 
-			if ratioV6 > tt.maxCompressionPct {
-				t.Errorf("Compression ratio %.2f%% exceeds maximum %.2f%%", ratioV6, tt.maxCompressionPct)
+			if ratioV7 > tt.maxCompressionPct {
+				t.Errorf("Compression ratio %.2f%% exceeds maximum %.2f%%", ratioV7, tt.maxCompressionPct)
 			}
 
 			// Verify V1 roundtrip
@@ -377,6 +391,17 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 			if !proto.Equal(tt.msg, resultV6) {
 				t.Error("V6 roundtrip verification failed")
 			}
+
+			// Verify V7 roundtrip
+			resultV7 := tt.msg.ProtoReflect().New().Interface()
+			err = MeshtasticDecompressV7(&bufV7, resultV7)
+			if err != nil {
+				t.Fatalf("MeshtasticDecompressV7 failed: %v", err)
+			}
+
+			if !proto.Equal(tt.msg, resultV7) {
+				t.Error("V7 roundtrip verification failed")
+			}
 		})
 	}
 }
@@ -403,11 +428,11 @@ func TestMeshtasticV6BitPacking(t *testing.T) {
 		{
 			name: "User with boolean flags",
 			msg: &meshtastic.User{
-				Id:           "!12345678",
-				LongName:     "Test Node",
-				ShortName:    "TEST",
-				IsLicensed:   false,
-				HwModel:      meshtastic.HardwareModel_TBEAM,
+				Id:         "!12345678",
+				LongName:   "Test Node",
+				ShortName:  "TEST",
+				IsLicensed: false,
+				HwModel:    meshtastic.HardwareModel_TBEAM,
 			},
 		},
 	}
@@ -467,17 +492,17 @@ func TestMeshtasticV5ContextAwareness(t *testing.T) {
 		{
 			name: "Position with typical GPS data",
 			msg: &meshtastic.Position{
-				LatitudeI:      proto.Int32(375317890),
-				LongitudeI:     proto.Int32(-1223898570),
-				Altitude:       proto.Int32(150), // Small altitude value
-				Time:           1703520000,
-				SatsInView:     8,                // Typical satellite count
-				GpsAccuracy:    5,                // Good accuracy
-				PDOP:           120,              // Good DOP
-				HDOP:           90,
-				VDOP:           100,
-				GroundSpeed:    proto.Uint32(25), // Moderate speed
-				PrecisionBits:  8,
+				LatitudeI:     proto.Int32(375317890),
+				LongitudeI:    proto.Int32(-1223898570),
+				Altitude:      proto.Int32(150), // Small altitude value
+				Time:          1703520000,
+				SatsInView:    8,   // Typical satellite count
+				GpsAccuracy:   5,   // Good accuracy
+				PDOP:          120, // Good DOP
+				HDOP:          90,
+				VDOP:          100,
+				GroundSpeed:   proto.Uint32(25), // Moderate speed
+				PrecisionBits: 8,
 			},
 		},
 		{
@@ -486,9 +511,9 @@ func TestMeshtasticV5ContextAwareness(t *testing.T) {
 				Time: 1703520000,
 				Variant: &meshtastic.Telemetry_DeviceMetrics{
 					DeviceMetrics: &meshtastic.DeviceMetrics{
-						BatteryLevel:       proto.Uint32(75),     // Mid-high battery
+						BatteryLevel:       proto.Uint32(75), // Mid-high battery
 						Voltage:            proto.Float32(4.1),
-						ChannelUtilization: proto.Float32(15.5),  // Low utilization
+						ChannelUtilization: proto.Float32(15.5), // Low utilization
 						AirUtilTx:          proto.Float32(5.2),
 						UptimeSeconds:      proto.Uint32(86400),
 					},
@@ -500,8 +525,8 @@ func TestMeshtasticV5ContextAwareness(t *testing.T) {
 			msg: &meshtastic.MeshPacket{
 				From:     123456789,
 				To:       987654321,
-				Channel:  0, // Default channel
-				HopLimit: 3, // Typical hop limit
+				Channel:  0,   // Default channel
+				HopLimit: 3,   // Typical hop limit
 				RxRssi:   -85, // Typical RSSI
 				RxSnr:    7.5,
 				Priority: meshtastic.MeshPacket_DEFAULT,

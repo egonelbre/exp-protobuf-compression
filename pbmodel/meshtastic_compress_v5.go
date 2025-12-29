@@ -179,9 +179,9 @@ func meshtasticCompressFieldValueV5(fieldPath string, fd protoreflect.FieldDescr
 	// Special handling for Data.payload field
 	if fd.Name() == "payload" && fd.Kind() == protoreflect.BytesKind {
 		data := value.Bytes()
-		
+
 		isText := mcb.currentPortNum != nil && *mcb.currentPortNum == meshtastic.PortNum_TEXT_MESSAGE_APP
-		
+
 		if !isText && utf8.Valid(data) {
 			printableCount := 0
 			for _, b := range data {
@@ -235,7 +235,7 @@ func meshtasticCompressFieldValueV5(fieldPath string, fd protoreflect.FieldDescr
 
 	case protoreflect.EnumKind:
 		enumValue := value.Enum()
-		
+
 		// Check if this enum has a predicted common value (from V4)
 		fieldName := string(fd.Name())
 		if predictedValue, hasPrediction := mcb.enumPredictions[fieldName]; hasPrediction {
@@ -246,7 +246,7 @@ func meshtasticCompressFieldValueV5(fieldPath string, fd protoreflect.FieldDescr
 				return err
 			}
 		}
-		
+
 		enumDesc := fd.Enum()
 		enumValueDesc := enumDesc.Values().ByNumber(enumValue)
 		if enumValueDesc == nil {

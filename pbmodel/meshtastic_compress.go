@@ -140,10 +140,10 @@ func meshtasticCompressFieldValue(fieldPath string, fd protoreflect.FieldDescrip
 	// Special handling for Data.payload field
 	if fd.Name() == "payload" && fd.Kind() == protoreflect.BytesKind {
 		data := value.Bytes()
-		
+
 		// Check if this is likely text based on portnum
 		isText := mmb.currentPortNum != nil && *mmb.currentPortNum == meshtastic.PortNum_TEXT_MESSAGE_APP
-		
+
 		// Also check if the bytes are valid UTF-8 as a fallback
 		if !isText && utf8.Valid(data) {
 			// Additional heuristic: check if mostly printable ASCII

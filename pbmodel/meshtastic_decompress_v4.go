@@ -210,7 +210,7 @@ func meshtasticDecodeFieldValueV4(fieldPath string, fd protoreflect.FieldDescrip
 
 	case protoreflect.EnumKind:
 		enumDesc := fd.Enum()
-		
+
 		// Check if this enum has a predicted common value
 		fieldName := string(fd.Name())
 		if predictedValue, hasPrediction := mmb.enumPredictions[fieldName]; hasPrediction {
@@ -219,14 +219,14 @@ func meshtasticDecodeFieldValueV4(fieldPath string, fd protoreflect.FieldDescrip
 			if err != nil {
 				return protoreflect.Value{}, err
 			}
-			
+
 			if isPredicted == 1 {
 				// Common value
 				return protoreflect.ValueOfEnum(predictedValue), nil
 			}
 			// Not common value, continue to decode full value
 		}
-		
+
 		// Decode full enum value
 		idx, err := dec.Decode(mmb.GetEnumModel(fieldPath, enumDesc))
 		if err != nil {

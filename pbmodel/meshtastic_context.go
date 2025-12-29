@@ -9,11 +9,12 @@ import (
 // message type and field context within Meshtastic protocol messages.
 type MeshtasticContextualModelBuilder struct {
 	*MeshtasticModelBuilder
-	
+
 	// Context tracking
 	messageType     string // Current message type (Position, User, etc.)
 	contextModels   map[string]arithcode.Model
 	enumPredictions map[string]protoreflect.EnumNumber
+	booleanModels   map[string]arithcode.Model // Field-specific boolean models
 }
 
 // NewMeshtasticContextualModelBuilder creates a context-aware model builder.
@@ -22,6 +23,7 @@ func NewMeshtasticContextualModelBuilder() *MeshtasticContextualModelBuilder {
 		MeshtasticModelBuilder: NewMeshtasticModelBuilder(),
 		contextModels:          make(map[string]arithcode.Model),
 		enumPredictions:        getCommonEnumValues(),
+		booleanModels:          make(map[string]arithcode.Model),
 	}
 }
 
@@ -29,19 +31,19 @@ func NewMeshtasticContextualModelBuilder() *MeshtasticContextualModelBuilder {
 func (mcb *MeshtasticContextualModelBuilder) GetContextualFieldModel(fieldPath string, fd protoreflect.FieldDescriptor) arithcode.Model {
 	// Build context key
 	contextKey := mcb.messageType + ":" + fieldPath
-	
+
 	// Check cache
 	if model, ok := mcb.contextModels[contextKey]; ok {
 		return model
 	}
-	
+
 	// Create context-specific model
 	model := mcb.createContextSpecificModel(fieldPath, fd)
 	if model != nil {
 		mcb.contextModels[contextKey] = model
 		return model
 	}
-	
+
 	// Fall back to standard field model
 	return mcb.GetFieldModel(fieldPath, fd)
 }
@@ -49,107 +51,107 @@ func (mcb *MeshtasticContextualModelBuilder) GetContextualFieldModel(fieldPath s
 // createContextSpecificModel creates specialized models for known Meshtastic field patterns.
 func (mcb *MeshtasticContextualModelBuilder) createContextSpecificModel(fieldPath string, fd protoreflect.FieldDescriptor) arithcode.Model {
 	fieldName := string(fd.Name())
-	
+
 	// Coordinate models (latitude_i, longitude_i)
 	if fieldName == "latitude_i" || fieldName == "longitude_i" {
 		return createCoordinateModel()
 	}
-	
+
 	// Altitude models (typically -500 to 9000 meters)
 	if fieldName == "altitude" || fieldName == "altitude_hae" {
 		return createAltitudeModel()
 	}
-	
+
 	// Node ID models (large 32-bit integers)
 	if fieldName == "from" || fieldName == "to" || fieldName == "num" || fieldName == "dest" || fieldName == "source" {
 		return createNodeIDModel()
 	}
-	
+
 	// Battery level (0-100%)
 	if fieldName == "battery_level" {
 		return createBatteryLevelModel()
 	}
-	
+
 	// Signal quality (RSSI: -120 to -30 dBm)
 	if fieldName == "rx_rssi" {
 		return createRSSIModel()
 	}
-	
+
 	// Signal quality (SNR: -20 to +20 dB)
 	if fieldName == "rx_snr" || fieldName == "snr" {
 		return createSNRModel()
 	}
-	
+
 	// Voltage (2.0 to 5.0V)
 	if fieldName == "voltage" {
 		return createVoltageModel()
 	}
-	
+
 	// Channel utilization (0-100%)
 	if fieldName == "channel_utilization" || fieldName == "air_util_tx" {
 		return createUtilizationModel()
 	}
-	
+
 	// Hop limit (typically 0-7)
 	if fieldName == "hop_limit" || fieldName == "hops_away" {
 		return createHopCountModel()
 	}
-	
+
 	// Channel number (typically 0-7)
 	if fieldName == "channel" {
 		return createChannelNumberModel()
 	}
-	
+
 	// Satellite count (0-20 typically)
 	if fieldName == "sats_in_view" {
 		return createSatelliteCountModel()
 	}
-	
+
 	// Precision/accuracy values (typically small positive integers)
 	if fieldName == "precision_bits" || fieldName == "gps_accuracy" {
 		return createPrecisionModel()
 	}
-	
+
 	// DOP values (10-1000, representing 1.0-100.0)
 	if fieldName == "pdop" || fieldName == "hdop" || fieldName == "vdop" {
 		return createDOPModel()
 	}
-	
+
 	// Speed values (0-200 km/h typically)
 	if fieldName == "ground_speed" {
 		return createSpeedModel()
 	}
-	
+
 	// Request ID (small sequential numbers)
 	if fieldName == "request_id" {
 		return createRequestIDModel()
 	}
-	
+
 	// Packet ID (larger numbers but sequential)
 	if fieldName == "id" && mcb.messageType == "MeshPacket" {
 		return createPacketIDModel()
 	}
-	
+
 	// Temperature (-40 to 85°C typical sensor range)
 	if fieldName == "temperature" {
 		return createTemperatureModel()
 	}
-	
+
 	// Humidity (0-100%)
 	if fieldName == "relative_humidity" {
 		return createHumidityModel()
 	}
-	
+
 	// Barometric pressure (300-1100 hPa)
 	if fieldName == "barometric_pressure" {
 		return createPressureModel()
 	}
-	
+
 	// IAQ (Indoor Air Quality, 0-500)
 	if fieldName == "iaq" {
 		return createIAQModel()
 	}
-	
+
 	return nil
 }
 
@@ -442,4 +444,114 @@ func createIAQModel() arithcode.Model {
 // SetMessageType sets the current message type context for better model selection.
 func (mcb *MeshtasticContextualModelBuilder) SetMessageType(msgType string) {
 	mcb.messageType = msgType
+}
+
+// GetBooleanModel returns a field-specific boolean model optimized for the given field.
+// Different boolean fields have different probability distributions - some are almost
+// always false, some are often true, etc.
+func (mcb *MeshtasticContextualModelBuilder) GetBooleanModel(fieldName string) arithcode.Model {
+	// Check cache
+	if model, ok := mcb.booleanModels[fieldName]; ok {
+		return model
+	}
+
+	// Create field-specific boolean model
+	model := createBooleanModel(fieldName)
+	mcb.booleanModels[fieldName] = model
+	return model
+}
+
+// createBooleanModel creates a probability model for a specific boolean field.
+// The frequencies are [false, true] where higher values mean higher probability.
+func createBooleanModel(fieldName string) arithcode.Model {
+	switch fieldName {
+	// Fields that are almost always false (95% false, 5% true)
+	case "want_ack", "via_mqtt", "pki_encrypted", "want_response":
+		return arithcode.NewFrequencyTable([]uint64{950, 50})
+
+	// Fields that are very rarely true (90% false, 10% true)
+	case "is_licensed", "is_unmessagable", "is_favorite", "is_ignored",
+		"is_key_manually_verified", "retained", "rebooted", "disconnect":
+		return arithcode.NewFrequencyTable([]uint64{900, 100})
+
+	// Configuration flags - usually disabled (80% false, 20% true)
+	case "enabled", "encryption_enabled", "json_enabled", "tls_enabled",
+		"proxy_to_client_enabled", "map_reporting_enabled", "should_report_location",
+		"allow_undefined_pin_access", "transmit_over_lora", "send_bell",
+		"use_pullup", "codec2_enabled", "echo", "override_console_serial_port",
+		"active", "alert_message", "alert_message_vibra", "alert_message_buzzer",
+		"alert_bell", "alert_bell_vibra", "alert_bell_buzzer", "use_pwm",
+		"use_i2s_as_buzzer", "heartbeat", "is_server", "save", "clear_on_reboot",
+		"environment_measurement_enabled", "environment_screen_enabled",
+		"environment_display_fahrenheit", "air_quality_enabled",
+		"power_measurement_enabled", "power_screen_enabled",
+		"health_measurement_enabled", "health_screen_enabled",
+		"device_telemetry_enabled", "rotary1_enabled", "updown1_enabled",
+		"led_state", "screen_lock", "settings_lock", "alert_enabled",
+		"banner_enabled", "is_clockface_analog", "follow_gps":
+		return arithcode.NewFrequencyTable([]uint64{800, 200})
+
+	// Display/UI settings - often true (40% false, 60% true)
+	case "gps_enabled", "wifi_enabled", "eth_enabled", "ipv6_enabled",
+		"flip_screen", "heading_bold", "wake_on_tap_or_motion",
+		"use_12h_clock", "use_long_node_name", "position_broadcast_smart_enabled",
+		"fixed_position", "is_power_saving":
+		return arithcode.NewFrequencyTable([]uint64{400, 600})
+
+	// Fields with specific biases based on Meshtastic usage patterns
+	case "use_preset":
+		// Most users use presets (30% false, 70% true)
+		return arithcode.NewFrequencyTable([]uint64{300, 700})
+
+	case "tx_enabled":
+		// Transmit usually enabled (20% false, 80% true)
+		return arithcode.NewFrequencyTable([]uint64{200, 800})
+
+	case "override_duty_cycle", "sx126x_rx_boosted_gain", "pa_fan_disabled":
+		// Advanced settings rarely changed (85% false, 15% true)
+		return arithcode.NewFrequencyTable([]uint64{850, 150})
+
+	case "ignore_mqtt", "config_ok_to_mqtt":
+		// MQTT settings rarely used (90% false, 10% true)
+		return arithcode.NewFrequencyTable([]uint64{900, 100})
+
+	case "is_managed", "serial_enabled", "debug_log_api_enabled", "admin_channel_enabled":
+		// Admin/debug features rarely enabled (85% false, 15% true)
+		return arithcode.NewFrequencyTable([]uint64{850, 150})
+
+	case "uplink_enabled", "downlink_enabled":
+		// Channel settings (70% false, 30% true)
+		return arithcode.NewFrequencyTable([]uint64{700, 300})
+
+	case "is_muted":
+		// Channels rarely muted (90% false, 10% true)
+		return arithcode.NewFrequencyTable([]uint64{900, 100})
+
+	case "canShutdown", "hasWifi", "hasBluetooth", "hasEthernet",
+		"hasRemoteHardware", "hasPKC":
+		// Device capabilities vary widely (50% false, 50% true - conservative)
+		return arithcode.NewFrequencyTable([]uint64{500, 500})
+
+	case "request_transfer", "accept_transfer":
+		// File transfers rare (95% false, 5% true)
+		return arithcode.NewFrequencyTable([]uint64{950, 50})
+
+	case "double_tap_as_button_press", "disable_triple_click", "led_heartbeat_disabled":
+		// Button/LED settings (70% false, 30% true)
+		return arithcode.NewFrequencyTable([]uint64{700, 300})
+
+	case "compass_north_top":
+		// Display orientation (60% false, 40% true)
+		return arithcode.NewFrequencyTable([]uint64{600, 400})
+
+	case "unknown_switch", "offline_switch", "public_key_switch",
+		"position_switch", "chat_switch", "telemetry_switch", "iaq_switch":
+		// UI switches - context dependent (65% false, 35% true)
+		return arithcode.NewFrequencyTable([]uint64{650, 350})
+
+	default:
+		// Conservative default: slightly biased toward false (60% false, 40% true)
+		// This is better than uniform 50/50 for most boolean fields in protocols
+		return arithcode.NewFrequencyTable([]uint64{600, 400})
+	}
 }

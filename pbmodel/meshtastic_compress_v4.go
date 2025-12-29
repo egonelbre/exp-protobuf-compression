@@ -46,19 +46,19 @@ func getCommonEnumValues() map[string]protoreflect.EnumNumber {
 	return map[string]protoreflect.EnumNumber{
 		// Position.location_source - most positions from internal GPS
 		"location_source": protoreflect.EnumNumber(meshtastic.Position_LOC_INTERNAL),
-		
+
 		// Position.altitude_source - most altitudes from internal GPS
 		"altitude_source": protoreflect.EnumNumber(meshtastic.Position_ALT_INTERNAL),
-		
+
 		// User.hw_model - TBEAM is very common
 		"hw_model": protoreflect.EnumNumber(meshtastic.HardwareModel_TBEAM),
-		
+
 		// Config.DeviceConfig.role - most nodes are CLIENT
 		"role": protoreflect.EnumNumber(meshtastic.Config_DeviceConfig_CLIENT),
-		
+
 		// MeshPacket.priority - DEFAULT is most common
 		"priority": protoreflect.EnumNumber(meshtastic.MeshPacket_DEFAULT),
-		
+
 		// MeshPacket.delayed - NO_DELAY is most common
 		"delayed": protoreflect.EnumNumber(meshtastic.MeshPacket_NO_DELAY),
 	}
@@ -207,9 +207,9 @@ func meshtasticCompressFieldValueV4(fieldPath string, fd protoreflect.FieldDescr
 	// Special handling for Data.payload field
 	if fd.Name() == "payload" && fd.Kind() == protoreflect.BytesKind {
 		data := value.Bytes()
-		
+
 		isText := mmb.currentPortNum != nil && *mmb.currentPortNum == meshtastic.PortNum_TEXT_MESSAGE_APP
-		
+
 		if !isText && utf8.Valid(data) {
 			printableCount := 0
 			for _, b := range data {
@@ -262,7 +262,7 @@ func meshtasticCompressFieldValueV4(fieldPath string, fd protoreflect.FieldDescr
 
 	case protoreflect.EnumKind:
 		enumValue := value.Enum()
-		
+
 		// Check if this enum has a predicted common value
 		fieldName := string(fd.Name())
 		if predictedValue, hasPrediction := mmb.enumPredictions[fieldName]; hasPrediction {
@@ -275,7 +275,7 @@ func meshtasticCompressFieldValueV4(fieldPath string, fd protoreflect.FieldDescr
 				return err
 			}
 		}
-		
+
 		// Encode the actual enum value
 		enumDesc := fd.Enum()
 		enumValueDesc := enumDesc.Values().ByNumber(enumValue)

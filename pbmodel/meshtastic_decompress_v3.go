@@ -97,7 +97,7 @@ func meshtasticDecompressMessageDelta(fieldPath string, msg protoreflect.Message
 	// Decode fields with deltas
 	lastFieldNum := 0
 	var presentFields []protoreflect.FieldDescriptor
-	
+
 	for i := 0; i < int(numPresent); i++ {
 		// Decode delta
 		delta, err := meshtasticDecodeVarintFromDecoderV2(dec, mmb.byteModel)
@@ -154,7 +154,7 @@ func meshtasticDecodeFieldV3(fieldPath string, fd protoreflect.FieldDescriptor, 
 		nestedMsg := msg.Mutable(fd).Message()
 		return meshtasticDecompressMessageV3(fieldPath, nestedMsg, dec, mmb)
 	}
-	
+
 	value, err := meshtasticDecodeFieldValueV3(fieldPath, fd, dec, mmb)
 	if err != nil {
 		return err

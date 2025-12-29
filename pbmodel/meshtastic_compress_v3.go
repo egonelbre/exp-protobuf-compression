@@ -66,7 +66,7 @@ func meshtasticCompressMessageV3(fieldPath string, msg protoreflect.Message, enc
 // meshtasticCompressMessagePresenceBits encodes using presence bits.
 func meshtasticCompressMessagePresenceBits(fieldPath string, msg protoreflect.Message, enc *arithcode.Encoder, mmb *MeshtasticModelBuilder, fields protoreflect.FieldDescriptors, presentFields []protoreflect.FieldDescriptor) error {
 	md := msg.Descriptor()
-	
+
 	// Create a map for quick lookup
 	presentMap := make(map[protoreflect.FieldNumber]bool)
 	for _, fd := range presentFields {
@@ -113,7 +113,7 @@ func meshtasticCompressMessagePresenceBits(fieldPath string, msg protoreflect.Me
 // meshtasticCompressMessageDelta encodes using delta-encoded field numbers.
 func meshtasticCompressMessageDelta(fieldPath string, msg protoreflect.Message, enc *arithcode.Encoder, mmb *MeshtasticModelBuilder, presentFields []protoreflect.FieldDescriptor) error {
 	md := msg.Descriptor()
-	
+
 	// Encode number of present fields
 	numPresentBytes := encodeVarint(uint64(len(presentFields)))
 	for _, b := range numPresentBytes {
