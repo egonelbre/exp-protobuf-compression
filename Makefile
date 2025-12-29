@@ -1,3 +1,7 @@
+.PHONY: generate
+generate:
+	buf generate
+	make fmt
 
 .PHONY: fmt
 fmt:

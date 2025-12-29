@@ -1,0 +1,10 @@
+# buf.gen.yaml defines how to generate code.
+version: v2
+plugins:
+  # Generate Go code
+  - remote: buf.build/protocolbuffers/go
+    out: .
+    opt:
+      - paths=source_relative
+managed:
+  enabled: true

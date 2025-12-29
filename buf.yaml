@@ -1,0 +1,15 @@
+# buf.yaml defines a module.
+version: v2
+modules:
+  - path: .
+lint:
+  use:
+    - STANDARD
+  except:
+    # Allow packages to not have a version suffix
+    - PACKAGE_VERSION_SUFFIX
+    # Allow TODO comments in proto files
+    - COMMENT_FIELD
+breaking:
+  use:
+    - FILE
