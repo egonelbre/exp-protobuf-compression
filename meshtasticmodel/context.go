@@ -909,6 +909,7 @@ func createRainfallModel() arithcode.Model {
 func createSoilMoistureModel() arithcode.Model {
 	freqs := make([]uint64, 256)
 	// Soil moisture 1-100, favor mid-range (healthy soil)
+	freqs[0] = 10 // 0 is possible but rare
 	for i := 1; i <= 100; i++ {
 		if i >= 20 && i <= 80 {
 			freqs[i] = 80
