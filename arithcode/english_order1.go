@@ -8,14 +8,14 @@ import "io"
 type EnglishOrder1Model struct {
 	charToSymbol map[rune]int
 	symbolToChar []rune
-	
+
 	// Context-dependent frequency tables
 	// contextModels[prevChar] gives the frequency table for the next character
 	contextModels map[int]*FrequencyTable
-	
+
 	// Default model for when we don't have context
 	defaultModel *FrequencyTable
-	
+
 	// Special symbols
 	otherSymbol int // For characters not in our table
 }
@@ -66,7 +66,7 @@ func NewEnglishOrder1Model() *EnglishOrder1Model {
 func (em *EnglishOrder1Model) createDefaultModel() *FrequencyTable {
 	numSymbols := len(em.symbolToChar)
 	freqs := make([]uint64, numSymbols)
-	
+
 	// Default frequencies (order-0)
 	baseFreqs := []uint64{
 		1300, 1270, 906, 817, 751, 697, 675, 633, 609, 599, // space, e, t, a, o, i, n, s, h, r
@@ -81,17 +81,17 @@ func (em *EnglishOrder1Model) createDefaultModel() *FrequencyTable {
 		20, 5, 5, 5, 10, 5, 10, 10, 15, 15,
 		30, 5, 8, 8, 3, 3,
 	}
-	
+
 	copy(freqs, baseFreqs)
 	freqs[em.otherSymbol] = 100 // "other" symbol
-	
+
 	return NewFrequencyTable(freqs)
 }
 
 // buildContextModels creates frequency tables for different contexts.
 func (em *EnglishOrder1Model) buildContextModels() {
 	numSymbols := len(em.symbolToChar)
-	
+
 	// Helper to create a frequency table with biases
 	createBiasedModel := func(biases map[rune]uint64) *FrequencyTable {
 		freqs := make([]uint64, numSymbols)
@@ -107,68 +107,68 @@ func (em *EnglishOrder1Model) buildContextModels() {
 		}
 		return NewFrequencyTable(freqs)
 	}
-	
+
 	// Space typically followed by uppercase or common starting letters
 	em.contextModels[em.charToSymbol[' ']] = createBiasedModel(map[rune]uint64{
 		't': 800, 'a': 700, 'o': 500, 'i': 450, 'w': 400, 's': 380, 'b': 300, 'c': 280,
 		'h': 250, 'm': 220, 'f': 200, 'p': 180, 'd': 170, 'n': 150,
 		'T': 100, 'I': 90, 'A': 80, 'W': 70, 'H': 60, 'S': 50,
 	})
-	
+
 	// 'e' often followed by space, d, r, s, n
 	em.contextModels[em.charToSymbol['e']] = createBiasedModel(map[rune]uint64{
 		' ': 900, 'd': 600, 'r': 550, 's': 500, 'n': 400, 't': 300, 'a': 250, 'l': 200, 'c': 150,
 	})
-	
+
 	// 't' often followed by h, e, i, o
 	em.contextModels[em.charToSymbol['t']] = createBiasedModel(map[rune]uint64{
 		'h': 800, 'e': 500, 'i': 400, 'o': 350, ' ': 300, 'a': 200, 'r': 180, 's': 150, 'y': 120,
 	})
-	
+
 	// 'h' often followed by e, a, i, o
 	em.contextModels[em.charToSymbol['h']] = createBiasedModel(map[rune]uint64{
 		'e': 700, 'a': 400, 'i': 350, 'o': 300, ' ': 200, 't': 150, 'r': 100,
 	})
-	
+
 	// 'a' often followed by t, n, r, l, s
 	em.contextModels[em.charToSymbol['a']] = createBiasedModel(map[rune]uint64{
 		't': 600, 'n': 550, 'r': 500, 'l': 450, 's': 400, ' ': 350, 'd': 300, 'i': 250, 'c': 200,
 	})
-	
+
 	// 'n' often followed by space, d, t, g, e
 	em.contextModels[em.charToSymbol['n']] = createBiasedModel(map[rune]uint64{
 		' ': 700, 'd': 500, 't': 450, 'g': 400, 'e': 350, 's': 300, 'c': 200, 'o': 180,
 	})
-	
+
 	// 'o' often followed by n, f, r, u, m
 	em.contextModels[em.charToSymbol['o']] = createBiasedModel(map[rune]uint64{
 		'n': 600, 'f': 400, 'r': 380, 'u': 350, 'm': 300, ' ': 280, 'w': 250, 'p': 200, 't': 180,
 	})
-	
+
 	// 'r' often followed by e, s, t, i, o
 	em.contextModels[em.charToSymbol['r']] = createBiasedModel(map[rune]uint64{
 		'e': 600, 's': 400, 't': 350, 'i': 300, 'o': 280, ' ': 250, 'a': 200, 'y': 150,
 	})
-	
+
 	// 'i' often followed by n, t, o, s, c
 	em.contextModels[em.charToSymbol['i']] = createBiasedModel(map[rune]uint64{
 		'n': 600, 't': 500, 'o': 400, 's': 350, 'c': 300, 'e': 250, ' ': 200, 'a': 150, 'l': 140,
 	})
-	
+
 	// 's' often followed by space, t, e, i, h
 	em.contextModels[em.charToSymbol['s']] = createBiasedModel(map[rune]uint64{
 		' ': 700, 't': 500, 'e': 450, 'i': 350, 'h': 300, 'o': 250, 's': 200, 'a': 180, 'u': 150,
 	})
-	
+
 	// Common punctuation contexts
 	em.contextModels[em.charToSymbol['.']] = createBiasedModel(map[rune]uint64{
 		' ': 800, '\n': 150,
 	})
-	
+
 	em.contextModels[em.charToSymbol[',']] = createBiasedModel(map[rune]uint64{
 		' ': 900,
 	})
-	
+
 	// Digits often followed by other digits, space, or punctuation
 	for _, digit := range "0123456789" {
 		em.contextModels[em.charToSymbol[digit]] = createBiasedModel(map[rune]uint64{
@@ -184,11 +184,11 @@ func (em *EnglishOrder1Model) GetModel(prevSymbol int) Model {
 	if prevSymbol < 0 || prevSymbol >= len(em.symbolToChar) {
 		return em.defaultModel
 	}
-	
+
 	if model, ok := em.contextModels[prevSymbol]; ok {
 		return model
 	}
-	
+
 	return em.defaultModel
 }
 
@@ -197,10 +197,10 @@ func EncodeStringOrder1(s string, w io.Writer) error {
 	enc := NewEncoder(w)
 	model := NewEnglishOrder1Model()
 	byteModel := NewUniformModel(256)
-	
+
 	runes := []rune(s)
 	length := len(runes)
-	
+
 	// Encode length as varint
 	tempLen := length
 	for i := 0; i < 4; i++ {
@@ -216,10 +216,10 @@ func EncodeStringOrder1(s string, w io.Writer) error {
 			break
 		}
 	}
-	
+
 	// Track previous symbol for context
 	prevSymbol := -1
-	
+
 	// Encode each character
 	for _, ch := range runes {
 		symbol, ok := model.charToSymbol[ch]
@@ -229,7 +229,7 @@ func EncodeStringOrder1(s string, w io.Writer) error {
 			if err := enc.Encode(model.otherSymbol, contextModel); err != nil {
 				return err
 			}
-			
+
 			// Encode the actual rune as UTF-8 bytes
 			utf8Bytes := []byte(string(ch))
 			if err := enc.Encode(len(utf8Bytes), NewUniformModel(5)); err != nil {
@@ -240,7 +240,7 @@ func EncodeStringOrder1(s string, w io.Writer) error {
 					return err
 				}
 			}
-			
+
 			prevSymbol = model.otherSymbol
 		} else {
 			// Use context-specific model
@@ -251,7 +251,7 @@ func EncodeStringOrder1(s string, w io.Writer) error {
 			prevSymbol = symbol
 		}
 	}
-	
+
 	return enc.Close()
 }
 
@@ -261,10 +261,10 @@ func DecodeStringOrder1(r io.Reader) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	model := NewEnglishOrder1Model()
 	byteModel := NewUniformModel(256)
-	
+
 	// Decode length
 	var length int
 	for i := 0; i < 4; i++ {
@@ -278,10 +278,10 @@ func DecodeStringOrder1(r io.Reader) (string, error) {
 			break
 		}
 	}
-	
+
 	// Track previous symbol for context
 	prevSymbol := -1
-	
+
 	// Decode characters
 	result := make([]rune, 0, length)
 	for len(result) < length {
@@ -290,14 +290,14 @@ func DecodeStringOrder1(r io.Reader) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		
+
 		if symbol == model.otherSymbol {
 			// Decode UTF-8 bytes for unknown character
 			numBytes, err := dec.Decode(NewUniformModel(5))
 			if err != nil {
 				return "", err
 			}
-			
+
 			utf8Bytes := make([]byte, numBytes)
 			for i := 0; i < numBytes; i++ {
 				b, err := dec.Decode(byteModel)
@@ -306,18 +306,18 @@ func DecodeStringOrder1(r io.Reader) (string, error) {
 				}
 				utf8Bytes[i] = byte(b)
 			}
-			
+
 			runes := []rune(string(utf8Bytes))
 			if len(runes) > 0 {
 				result = append(result, runes[0])
 			}
-			
+
 			prevSymbol = model.otherSymbol
 		} else {
 			result = append(result, model.symbolToChar[symbol])
 			prevSymbol = symbol
 		}
 	}
-	
+
 	return string(result), nil
 }
