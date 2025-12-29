@@ -28,16 +28,16 @@ func CompressV4(msg proto.Message, w io.Writer) error {
 	return enc.Close()
 }
 
-// MeshtasticModelBuilderV4 extends the model builder with enum prediction.
+// ModelBuilderV4 extends the model builder with enum prediction.
 type ModelBuilderV4 struct {
-	*ModelBuilder
+	*ModelBuilderV1
 	enumPredictions map[string]protoreflect.EnumNumber
 }
 
 // NewModelBuilderV4 creates a builder with enum predictions.
 func NewModelBuilderV4() *ModelBuilderV4 {
 	return &ModelBuilderV4{
-		ModelBuilder: NewModelBuilder(),
+		ModelBuilderV1: NewModelBuilderV1(),
 		enumPredictions:        getCommonEnumValues(),
 	}
 }

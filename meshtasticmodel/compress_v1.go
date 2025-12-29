@@ -15,37 +15,37 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-// Compress compresses a protobuf message with Meshtastic-specific optimizations.
+// CompressV1 compresses a protobuf message with Meshtastic-specific optimizations.
 // This includes:
 // - Treating Data.payload as text when portnum is TEXT_MESSAGE_APP
 // - Delta encoding for coordinates
 // - Optimized models for common Meshtastic field patterns
-func Compress(msg proto.Message, w io.Writer) error {
-	mmb := NewModelBuilder()
+func CompressV1(msg proto.Message, w io.Writer) error {
+	mmb := NewModelBuilderV1()
 	enc := arithcode.NewEncoder(w)
 
-	if err := compressMessage("", msg.ProtoReflect(), enc, mmb); err != nil {
+	if err := compressMessageV1("", msg.ProtoReflect(), enc, mmb); err != nil {
 		return err
 	}
 
 	return enc.Close()
 }
 
-// ModelBuilder extends AdaptiveModelBuilder with Meshtastic-specific knowledge.
-type ModelBuilder struct {
+// ModelBuilderV1 extends AdaptiveModelBuilder with Meshtastic-specific knowledge.
+type ModelBuilderV1 struct {
 	*pbmodel.AdaptiveModelBuilder
 	currentPortNum *meshtastic.PortNum
 }
 
 // NewModelBuilder creates a new Meshtastic-specific model builder.
-func NewModelBuilder() *ModelBuilder {
-	return &ModelBuilder{
+func NewModelBuilderV1() *ModelBuilderV1 {
+	return &ModelBuilderV1{
 		AdaptiveModelBuilder: pbmodel.NewAdaptiveModelBuilder(),
 	}
 }
 
 // compressMessage recursively compresses with Meshtastic-specific optimizations.
-func compressMessage(fieldPath string, msg protoreflect.Message, enc *arithcode.Encoder, mmb *ModelBuilder) error {
+func compressMessageV1(fieldPath string, msg protoreflect.Message, enc *arithcode.Encoder, mmb *ModelBuilderV1) error {
 	md := msg.Descriptor()
 	fields := md.Fields()
 
@@ -77,7 +77,7 @@ func compressMessage(fieldPath string, msg protoreflect.Message, enc *arithcode.
 		}
 
 		if fd.IsList() {
-			if err := compressRepeatedField(currentPath, fd, value.List(), enc, mmb); err != nil {
+			if err := compressRepeatedFieldV1(currentPath, fd, value.List(), enc, mmb); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		} else if fd.IsMap() {
@@ -85,11 +85,11 @@ func compressMessage(fieldPath string, msg protoreflect.Message, enc *arithcode.
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		} else if fd.Kind() == protoreflect.MessageKind {
-			if err := compressMessage(currentPath, value.Message(), enc, mmb); err != nil {
+			if err := compressMessageV1(currentPath, value.Message(), enc, mmb); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		} else {
-			if err := compressFieldValue(currentPath, fd, value, enc, mmb); err != nil {
+			if err := compressFieldValueV1(currentPath, fd, value, enc, mmb); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		}
@@ -104,7 +104,7 @@ func compressMessage(fieldPath string, msg protoreflect.Message, enc *arithcode.
 }
 
 // compressRepeatedField compresses repeated fields with Meshtastic optimizations.
-func compressRepeatedField(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, enc *arithcode.Encoder, mmb *ModelBuilder) error {
+func compressRepeatedFieldV1(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, enc *arithcode.Encoder, mmb *ModelBuilderV1) error {
 	lengthPath := fieldPath + "._length"
 	lengthModel := mmb.GetFieldModel(lengthPath, fd)
 	if lengthModel == nil {
@@ -123,11 +123,11 @@ func compressRepeatedField(fieldPath string, fd protoreflect.FieldDescriptor, li
 	for i := 0; i < length; i++ {
 		value := list.Get(i)
 		if fd.Kind() == protoreflect.MessageKind {
-			if err := compressMessage(elementPath, value.Message(), enc, mmb); err != nil {
+			if err := compressMessageV1(elementPath, value.Message(), enc, mmb); err != nil {
 				return fmt.Errorf("list element %d: %w", i, err)
 			}
 		} else {
-			if err := compressFieldValue(elementPath, fd, value, enc, mmb); err != nil {
+			if err := compressFieldValueV1(elementPath, fd, value, enc, mmb); err != nil {
 				return fmt.Errorf("list element %d: %w", i, err)
 			}
 		}
@@ -137,7 +137,7 @@ func compressRepeatedField(fieldPath string, fd protoreflect.FieldDescriptor, li
 }
 
 // compressFieldValue compresses field values with Meshtastic-specific logic.
-func compressFieldValue(fieldPath string, fd protoreflect.FieldDescriptor, value protoreflect.Value, enc *arithcode.Encoder, mmb *ModelBuilder) error {
+func compressFieldValueV1(fieldPath string, fd protoreflect.FieldDescriptor, value protoreflect.Value, enc *arithcode.Encoder, mmb *ModelBuilderV1) error {
 	// Special handling for Data.payload field
 	if fd.Name() == "payload" && fd.Kind() == protoreflect.BytesKind {
 		data := value.Bytes()

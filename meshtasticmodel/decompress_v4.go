@@ -96,7 +96,7 @@ func decompressRepeatedFieldV4(fieldPath string, fd protoreflect.FieldDescriptor
 		lengthModel = mmb.ByteModel()
 	}
 
-	length, err := decodeVarintFromDecoder(dec, lengthModel)
+	length, err := decodeVarintFromDecoderV1(dec, lengthModel)
 	if err != nil {
 		return fmt.Errorf("list length: %w", err)
 	}
@@ -129,7 +129,7 @@ func decompressMapFieldV4(fieldPath string, fd protoreflect.FieldDescriptor, m p
 		lengthModel = mmb.ByteModel()
 	}
 
-	length, err := decodeVarintFromDecoder(dec, lengthModel)
+	length, err := decodeVarintFromDecoderV1(dec, lengthModel)
 	if err != nil {
 		return fmt.Errorf("map length: %w", err)
 	}
@@ -176,7 +176,7 @@ func decodeFieldValueV4(fieldPath string, fd protoreflect.FieldDescriptor, dec *
 		}
 
 		if textFlag == 1 {
-			compressedLen, err := decodeVarintFromDecoder(dec, mmb.ByteModel())
+			compressedLen, err := decodeVarintFromDecoderV1(dec, mmb.ByteModel())
 			if err != nil {
 				return protoreflect.Value{}, err
 			}
@@ -240,35 +240,35 @@ func decodeFieldValueV4(fieldPath string, fd protoreflect.FieldDescriptor, dec *
 		return protoreflect.ValueOfEnum(enumValue), nil
 
 	case protoreflect.Int32Kind:
-		val, err := decodeVarintFromDecoder(dec, model)
+		val, err := decodeVarintFromDecoderV1(dec, model)
 		if err != nil {
 			return protoreflect.Value{}, err
 		}
 		return protoreflect.ValueOfInt32(int32(val)), nil
 
 	case protoreflect.Int64Kind:
-		val, err := decodeVarintFromDecoder(dec, model)
+		val, err := decodeVarintFromDecoderV1(dec, model)
 		if err != nil {
 			return protoreflect.Value{}, err
 		}
 		return protoreflect.ValueOfInt64(int64(val)), nil
 
 	case protoreflect.Uint32Kind:
-		val, err := decodeVarintFromDecoder(dec, model)
+		val, err := decodeVarintFromDecoderV1(dec, model)
 		if err != nil {
 			return protoreflect.Value{}, err
 		}
 		return protoreflect.ValueOfUint32(uint32(val)), nil
 
 	case protoreflect.Uint64Kind:
-		val, err := decodeVarintFromDecoder(dec, model)
+		val, err := decodeVarintFromDecoderV1(dec, model)
 		if err != nil {
 			return protoreflect.Value{}, err
 		}
 		return protoreflect.ValueOfUint64(val), nil
 
 	case protoreflect.Sint32Kind:
-		encoded, err := decodeVarintFromDecoder(dec, model)
+		encoded, err := decodeVarintFromDecoderV1(dec, model)
 		if err != nil {
 			return protoreflect.Value{}, err
 		}
@@ -276,7 +276,7 @@ func decodeFieldValueV4(fieldPath string, fd protoreflect.FieldDescriptor, dec *
 		return protoreflect.ValueOfInt32(int32(val)), nil
 
 	case protoreflect.Sint64Kind:
-		encoded, err := decodeVarintFromDecoder(dec, model)
+		encoded, err := decodeVarintFromDecoderV1(dec, model)
 		if err != nil {
 			return protoreflect.Value{}, err
 		}
@@ -358,7 +358,7 @@ func decodeFieldValueV4(fieldPath string, fd protoreflect.FieldDescriptor, dec *
 		return protoreflect.ValueOfFloat64(val), nil
 
 	case protoreflect.StringKind:
-		compressedLen, err := decodeVarintFromDecoder(dec, mmb.ByteModel())
+		compressedLen, err := decodeVarintFromDecoderV1(dec, mmb.ByteModel())
 		if err != nil {
 			return protoreflect.Value{}, err
 		}
@@ -380,7 +380,7 @@ func decodeFieldValueV4(fieldPath string, fd protoreflect.FieldDescriptor, dec *
 		return protoreflect.ValueOfString(str), nil
 
 	case protoreflect.BytesKind:
-		length, err := decodeVarintFromDecoder(dec, model)
+		length, err := decodeVarintFromDecoderV1(dec, model)
 		if err != nil {
 			return protoreflect.Value{}, err
 		}

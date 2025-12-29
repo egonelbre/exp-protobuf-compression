@@ -16,7 +16,7 @@ import (
 
 // DecompressV2 decompresses data with optimized field encoding.
 func DecompressV2(r io.Reader, msg proto.Message) error {
-	mmb := NewModelBuilder()
+	mmb := NewModelBuilderV1()
 	dec, err := arithcode.NewDecoder(r)
 	if err != nil {
 		return err
@@ -26,7 +26,7 @@ func DecompressV2(r io.Reader, msg proto.Message) error {
 }
 
 // decompressMessageV2 recursively decompresses with delta-encoded field numbers.
-func decompressMessageV2(fieldPath string, msg protoreflect.Message, dec *arithcode.Decoder, mmb *ModelBuilder) error {
+func decompressMessageV2(fieldPath string, msg protoreflect.Message, dec *arithcode.Decoder, mmb *ModelBuilderV1) error {
 	md := msg.Descriptor()
 
 	// Decode number of present fields
@@ -101,7 +101,7 @@ func decompressMessageV2(fieldPath string, msg protoreflect.Message, dec *arithc
 }
 
 // decompressRepeatedFieldV2 decompresses repeated fields.
-func decompressRepeatedFieldV2(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, dec *arithcode.Decoder, mmb *ModelBuilder) error {
+func decompressRepeatedFieldV2(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, dec *arithcode.Decoder, mmb *ModelBuilderV1) error {
 	lengthPath := fieldPath + "._length"
 	lengthModel := mmb.GetFieldModel(lengthPath, fd)
 	if lengthModel == nil {
@@ -134,7 +134,7 @@ func decompressRepeatedFieldV2(fieldPath string, fd protoreflect.FieldDescriptor
 }
 
 // decompressMapFieldV2 decompresses map fields.
-func decompressMapFieldV2(fieldPath string, fd protoreflect.FieldDescriptor, m protoreflect.Map, dec *arithcode.Decoder, mmb *ModelBuilder) error {
+func decompressMapFieldV2(fieldPath string, fd protoreflect.FieldDescriptor, m protoreflect.Map, dec *arithcode.Decoder, mmb *ModelBuilderV1) error {
 	lengthPath := fieldPath + "._length"
 	lengthModel := mmb.GetFieldModel(lengthPath, fd)
 	if lengthModel == nil {
@@ -179,7 +179,7 @@ func decompressMapFieldV2(fieldPath string, fd protoreflect.FieldDescriptor, m p
 }
 
 // decodeFieldValueV2 decodes field values with Meshtastic-specific logic.
-func decodeFieldValueV2(fieldPath string, fd protoreflect.FieldDescriptor, dec *arithcode.Decoder, mmb *ModelBuilder) (protoreflect.Value, error) {
+func decodeFieldValueV2(fieldPath string, fd protoreflect.FieldDescriptor, dec *arithcode.Decoder, mmb *ModelBuilderV1) (protoreflect.Value, error) {
 	// Special handling for Data.payload field
 	if fd.Name() == "payload" && fd.Kind() == protoreflect.BytesKind {
 		// Decode the text flag

@@ -15,7 +15,7 @@ import (
 // presence-bit encoding (for dense messages) and delta-encoded field numbers
 // (for sparse messages) based on which is more efficient.
 func CompressV3(msg proto.Message, w io.Writer) error {
-	mmb := NewModelBuilder()
+	mmb := NewModelBuilderV1()
 	enc := arithcode.NewEncoder(w)
 
 	if err := compressMessageV3("", msg.ProtoReflect(), enc, mmb); err != nil {
@@ -26,7 +26,7 @@ func CompressV3(msg proto.Message, w io.Writer) error {
 }
 
 // compressMessageV3 uses hybrid encoding strategy.
-func compressMessageV3(fieldPath string, msg protoreflect.Message, enc *arithcode.Encoder, mmb *ModelBuilder) error {
+func compressMessageV3(fieldPath string, msg protoreflect.Message, enc *arithcode.Encoder, mmb *ModelBuilderV1) error {
 	md := msg.Descriptor()
 	fields := md.Fields()
 
@@ -65,7 +65,7 @@ func compressMessageV3(fieldPath string, msg protoreflect.Message, enc *arithcod
 }
 
 // compressMessagePresenceBits encodes using presence bits.
-func compressMessagePresenceBits(fieldPath string, msg protoreflect.Message, enc *arithcode.Encoder, mmb *ModelBuilder, fields protoreflect.FieldDescriptors, presentFields []protoreflect.FieldDescriptor) error {
+func compressMessagePresenceBits(fieldPath string, msg protoreflect.Message, enc *arithcode.Encoder, mmb *ModelBuilderV1, fields protoreflect.FieldDescriptors, presentFields []protoreflect.FieldDescriptor) error {
 	md := msg.Descriptor()
 
 	// Create a map for quick lookup
@@ -112,7 +112,7 @@ func compressMessagePresenceBits(fieldPath string, msg protoreflect.Message, enc
 }
 
 // compressMessageDelta encodes using delta-encoded field numbers.
-func compressMessageDelta(fieldPath string, msg protoreflect.Message, enc *arithcode.Encoder, mmb *ModelBuilder, presentFields []protoreflect.FieldDescriptor) error {
+func compressMessageDelta(fieldPath string, msg protoreflect.Message, enc *arithcode.Encoder, mmb *ModelBuilderV1, presentFields []protoreflect.FieldDescriptor) error {
 	md := msg.Descriptor()
 
 	// Encode number of present fields
@@ -162,7 +162,7 @@ func compressMessageDelta(fieldPath string, msg protoreflect.Message, enc *arith
 }
 
 // encodeFieldV3 encodes a field value (shared by both strategies).
-func encodeFieldV3(fieldPath string, fd protoreflect.FieldDescriptor, value protoreflect.Value, enc *arithcode.Encoder, mmb *ModelBuilder) error {
+func encodeFieldV3(fieldPath string, fd protoreflect.FieldDescriptor, value protoreflect.Value, enc *arithcode.Encoder, mmb *ModelBuilderV1) error {
 	if fd.IsList() {
 		return compressRepeatedFieldV3(fieldPath, fd, value.List(), enc, mmb)
 	} else if fd.IsMap() {
@@ -174,7 +174,7 @@ func encodeFieldV3(fieldPath string, fd protoreflect.FieldDescriptor, value prot
 }
 
 // compressRepeatedFieldV3 compresses repeated fields.
-func compressRepeatedFieldV3(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, enc *arithcode.Encoder, mmb *ModelBuilder) error {
+func compressRepeatedFieldV3(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, enc *arithcode.Encoder, mmb *ModelBuilderV1) error {
 	lengthPath := fieldPath + "._length"
 	lengthModel := mmb.GetFieldModel(lengthPath, fd)
 	if lengthModel == nil {
@@ -207,7 +207,7 @@ func compressRepeatedFieldV3(fieldPath string, fd protoreflect.FieldDescriptor, 
 }
 
 // compressMapFieldV3 compresses map fields.
-func compressMapFieldV3(fieldPath string, fd protoreflect.FieldDescriptor, m protoreflect.Map, enc *arithcode.Encoder, mmb *ModelBuilder) error {
+func compressMapFieldV3(fieldPath string, fd protoreflect.FieldDescriptor, m protoreflect.Map, enc *arithcode.Encoder, mmb *ModelBuilderV1) error {
 	lengthPath := fieldPath + "._length"
 	lengthModel := mmb.GetFieldModel(lengthPath, fd)
 	if lengthModel == nil {
@@ -253,7 +253,7 @@ func compressMapFieldV3(fieldPath string, fd protoreflect.FieldDescriptor, m pro
 }
 
 // compressFieldValueV3 compresses a field value (reuses V1/V2 logic).
-func compressFieldValueV3(fieldPath string, fd protoreflect.FieldDescriptor, value protoreflect.Value, enc *arithcode.Encoder, mmb *ModelBuilder) error {
+func compressFieldValueV3(fieldPath string, fd protoreflect.FieldDescriptor, value protoreflect.Value, enc *arithcode.Encoder, mmb *ModelBuilderV1) error {
 	// Reuse the V2 implementation
 	return compressFieldValueV2(fieldPath, fd, value, enc, mmb)
 }

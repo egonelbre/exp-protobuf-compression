@@ -13,7 +13,7 @@ import (
 
 // DecompressV3 decompresses data with hybrid encoding.
 func DecompressV3(r io.Reader, msg proto.Message) error {
-	mmb := NewModelBuilder()
+	mmb := NewModelBuilderV1()
 	dec, err := arithcode.NewDecoder(r)
 	if err != nil {
 		return err
@@ -23,7 +23,7 @@ func DecompressV3(r io.Reader, msg proto.Message) error {
 }
 
 // decompressMessageV3 uses hybrid decoding strategy.
-func decompressMessageV3(fieldPath string, msg protoreflect.Message, dec *arithcode.Decoder, mmb *ModelBuilder) error {
+func decompressMessageV3(fieldPath string, msg protoreflect.Message, dec *arithcode.Decoder, mmb *ModelBuilderV1) error {
 	// Decode strategy flag
 	strategyFlag, err := dec.Decode(mmb.BoolModel())
 	if err != nil {
@@ -39,7 +39,7 @@ func decompressMessageV3(fieldPath string, msg protoreflect.Message, dec *arithc
 }
 
 // decompressMessagePresenceBits decodes using presence bits.
-func decompressMessagePresenceBits(fieldPath string, msg protoreflect.Message, dec *arithcode.Decoder, mmb *ModelBuilder) error {
+func decompressMessagePresenceBits(fieldPath string, msg protoreflect.Message, dec *arithcode.Decoder, mmb *ModelBuilderV1) error {
 	md := msg.Descriptor()
 	fields := md.Fields()
 
@@ -86,7 +86,7 @@ func decompressMessagePresenceBits(fieldPath string, msg protoreflect.Message, d
 }
 
 // decompressMessageDelta decodes using delta-encoded field numbers.
-func decompressMessageDelta(fieldPath string, msg protoreflect.Message, dec *arithcode.Decoder, mmb *ModelBuilder) error {
+func decompressMessageDelta(fieldPath string, msg protoreflect.Message, dec *arithcode.Decoder, mmb *ModelBuilderV1) error {
 	md := msg.Descriptor()
 
 	// Decode number of present fields
@@ -144,7 +144,7 @@ func decompressMessageDelta(fieldPath string, msg protoreflect.Message, dec *ari
 }
 
 // decodeFieldV3 decodes a field (shared by both strategies).
-func decodeFieldV3(fieldPath string, fd protoreflect.FieldDescriptor, msg protoreflect.Message, dec *arithcode.Decoder, mmb *ModelBuilder) error {
+func decodeFieldV3(fieldPath string, fd protoreflect.FieldDescriptor, msg protoreflect.Message, dec *arithcode.Decoder, mmb *ModelBuilderV1) error {
 	if fd.IsList() {
 		list := msg.Mutable(fd).List()
 		return decompressRepeatedFieldV3(fieldPath, fd, list, dec, mmb)
@@ -165,7 +165,7 @@ func decodeFieldV3(fieldPath string, fd protoreflect.FieldDescriptor, msg protor
 }
 
 // decompressRepeatedFieldV3 decompresses repeated fields.
-func decompressRepeatedFieldV3(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, dec *arithcode.Decoder, mmb *ModelBuilder) error {
+func decompressRepeatedFieldV3(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, dec *arithcode.Decoder, mmb *ModelBuilderV1) error {
 	lengthPath := fieldPath + "._length"
 	lengthModel := mmb.GetFieldModel(lengthPath, fd)
 	if lengthModel == nil {
@@ -198,7 +198,7 @@ func decompressRepeatedFieldV3(fieldPath string, fd protoreflect.FieldDescriptor
 }
 
 // decompressMapFieldV3 decompresses map fields.
-func decompressMapFieldV3(fieldPath string, fd protoreflect.FieldDescriptor, m protoreflect.Map, dec *arithcode.Decoder, mmb *ModelBuilder) error {
+func decompressMapFieldV3(fieldPath string, fd protoreflect.FieldDescriptor, m protoreflect.Map, dec *arithcode.Decoder, mmb *ModelBuilderV1) error {
 	lengthPath := fieldPath + "._length"
 	lengthModel := mmb.GetFieldModel(lengthPath, fd)
 	if lengthModel == nil {
@@ -243,7 +243,7 @@ func decompressMapFieldV3(fieldPath string, fd protoreflect.FieldDescriptor, m p
 }
 
 // decodeFieldValueV3 decodes a field value (reuses V2 logic).
-func decodeFieldValueV3(fieldPath string, fd protoreflect.FieldDescriptor, dec *arithcode.Decoder, mmb *ModelBuilder) (protoreflect.Value, error) {
+func decodeFieldValueV3(fieldPath string, fd protoreflect.FieldDescriptor, dec *arithcode.Decoder, mmb *ModelBuilderV1) (protoreflect.Value, error) {
 	// Reuse the V2 implementation
 	return decodeFieldValueV2(fieldPath, fd, dec, mmb)
 }

@@ -14,19 +14,19 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-// Decompress decompresses data into a protobuf message using Meshtastic-specific optimizations.
-func Decompress(r io.Reader, msg proto.Message) error {
-	mmb := NewModelBuilder()
+// DecompressV1 decompresses data into a protobuf message using Meshtastic-specific optimizations.
+func DecompressV1(r io.Reader, msg proto.Message) error {
+	mmb := NewModelBuilderV1()
 	dec, err := arithcode.NewDecoder(r)
 	if err != nil {
 		return err
 	}
 
-	return decompressMessage("", msg.ProtoReflect(), dec, mmb)
+	return decompressMessageV1("", msg.ProtoReflect(), dec, mmb)
 }
 
 // decompressMessage recursively decompresses with Meshtastic-specific optimizations.
-func decompressMessage(fieldPath string, msg protoreflect.Message, dec *arithcode.Decoder, mmb *ModelBuilder) error {
+func decompressMessageV1(fieldPath string, msg protoreflect.Message, dec *arithcode.Decoder, mmb *ModelBuilderV1) error {
 	md := msg.Descriptor()
 	fields := md.Fields()
 
@@ -46,7 +46,7 @@ func decompressMessage(fieldPath string, msg protoreflect.Message, dec *arithcod
 
 		// Track portnum for payload detection
 		if fd.Name() == "portnum" && fd.Kind() == protoreflect.EnumKind {
-			enumVal, err := decodeFieldValue(currentPath, fd, dec, mmb)
+			enumVal, err := decodeFieldValueV1(currentPath, fd, dec, mmb)
 			if err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
@@ -58,7 +58,7 @@ func decompressMessage(fieldPath string, msg protoreflect.Message, dec *arithcod
 
 		if fd.IsList() {
 			list := msg.Mutable(fd).List()
-			if err := decompressRepeatedField(currentPath, fd, list, dec, mmb); err != nil {
+			if err := decompressRepeatedFieldV1(currentPath, fd, list, dec, mmb); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		} else if fd.IsMap() {
@@ -68,11 +68,11 @@ func decompressMessage(fieldPath string, msg protoreflect.Message, dec *arithcod
 			}
 		} else if fd.Kind() == protoreflect.MessageKind {
 			nestedMsg := msg.Mutable(fd).Message()
-			if err := decompressMessage(currentPath, nestedMsg, dec, mmb); err != nil {
+			if err := decompressMessageV1(currentPath, nestedMsg, dec, mmb); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		} else {
-			value, err := decodeFieldValue(currentPath, fd, dec, mmb)
+			value, err := decodeFieldValueV1(currentPath, fd, dec, mmb)
 			if err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
@@ -89,14 +89,14 @@ func decompressMessage(fieldPath string, msg protoreflect.Message, dec *arithcod
 }
 
 // decompressRepeatedField decompresses repeated fields.
-func decompressRepeatedField(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, dec *arithcode.Decoder, mmb *ModelBuilder) error {
+func decompressRepeatedFieldV1(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, dec *arithcode.Decoder, mmb *ModelBuilderV1) error {
 	lengthPath := fieldPath + "._length"
 	lengthModel := mmb.GetFieldModel(lengthPath, fd)
 	if lengthModel == nil {
 		lengthModel = mmb.ByteModel()
 	}
 
-	length, err := decodeVarintFromDecoder(dec, lengthModel)
+	length, err := decodeVarintFromDecoderV1(dec, lengthModel)
 	if err != nil {
 		return fmt.Errorf("list length: %w", err)
 	}
@@ -105,12 +105,12 @@ func decompressRepeatedField(fieldPath string, fd protoreflect.FieldDescriptor, 
 	for i := 0; i < int(length); i++ {
 		if fd.Kind() == protoreflect.MessageKind {
 			elem := list.NewElement()
-			if err := decompressMessage(elementPath, elem.Message(), dec, mmb); err != nil {
+			if err := decompressMessageV1(elementPath, elem.Message(), dec, mmb); err != nil {
 				return fmt.Errorf("list element %d: %w", i, err)
 			}
 			list.Append(elem)
 		} else {
-			value, err := decodeFieldValue(elementPath, fd, dec, mmb)
+			value, err := decodeFieldValueV1(elementPath, fd, dec, mmb)
 			if err != nil {
 				return fmt.Errorf("list element %d: %w", i, err)
 			}
@@ -122,7 +122,7 @@ func decompressRepeatedField(fieldPath string, fd protoreflect.FieldDescriptor, 
 }
 
 // decodeFieldValue decodes field values with Meshtastic-specific logic.
-func decodeFieldValue(fieldPath string, fd protoreflect.FieldDescriptor, dec *arithcode.Decoder, mmb *ModelBuilder) (protoreflect.Value, error) {
+func decodeFieldValueV1(fieldPath string, fd protoreflect.FieldDescriptor, dec *arithcode.Decoder, mmb *ModelBuilderV1) (protoreflect.Value, error) {
 	// Special handling for Data.payload field
 	if fd.Name() == "payload" && fd.Kind() == protoreflect.BytesKind {
 		// Decode the text flag
@@ -133,7 +133,7 @@ func decodeFieldValue(fieldPath string, fd protoreflect.FieldDescriptor, dec *ar
 
 		if textFlag == 1 {
 			// Decompress as text
-			compressedLen, err := decodeVarintFromDecoder(dec, mmb.ByteModel())
+			compressedLen, err := decodeVarintFromDecoderV1(dec, mmb.ByteModel())
 			if err != nil {
 				return protoreflect.Value{}, err
 			}
@@ -181,35 +181,35 @@ func decodeFieldValue(fieldPath string, fd protoreflect.FieldDescriptor, dec *ar
 		return protoreflect.ValueOfEnum(enumValue), nil
 
 	case protoreflect.Int32Kind:
-		val, err := decodeVarintFromDecoder(dec, model)
+		val, err := decodeVarintFromDecoderV1(dec, model)
 		if err != nil {
 			return protoreflect.Value{}, err
 		}
 		return protoreflect.ValueOfInt32(int32(val)), nil
 
 	case protoreflect.Int64Kind:
-		val, err := decodeVarintFromDecoder(dec, model)
+		val, err := decodeVarintFromDecoderV1(dec, model)
 		if err != nil {
 			return protoreflect.Value{}, err
 		}
 		return protoreflect.ValueOfInt64(int64(val)), nil
 
 	case protoreflect.Uint32Kind:
-		val, err := decodeVarintFromDecoder(dec, model)
+		val, err := decodeVarintFromDecoderV1(dec, model)
 		if err != nil {
 			return protoreflect.Value{}, err
 		}
 		return protoreflect.ValueOfUint32(uint32(val)), nil
 
 	case protoreflect.Uint64Kind:
-		val, err := decodeVarintFromDecoder(dec, model)
+		val, err := decodeVarintFromDecoderV1(dec, model)
 		if err != nil {
 			return protoreflect.Value{}, err
 		}
 		return protoreflect.ValueOfUint64(val), nil
 
 	case protoreflect.Sint32Kind:
-		encoded, err := decodeVarintFromDecoder(dec, model)
+		encoded, err := decodeVarintFromDecoderV1(dec, model)
 		if err != nil {
 			return protoreflect.Value{}, err
 		}
@@ -217,7 +217,7 @@ func decodeFieldValue(fieldPath string, fd protoreflect.FieldDescriptor, dec *ar
 		return protoreflect.ValueOfInt32(int32(val)), nil
 
 	case protoreflect.Sint64Kind:
-		encoded, err := decodeVarintFromDecoder(dec, model)
+		encoded, err := decodeVarintFromDecoderV1(dec, model)
 		if err != nil {
 			return protoreflect.Value{}, err
 		}
@@ -300,7 +300,7 @@ func decodeFieldValue(fieldPath string, fd protoreflect.FieldDescriptor, dec *ar
 
 	case protoreflect.StringKind:
 		// Decode the compressed string length
-		compressedLen, err := decodeVarintFromDecoder(dec, mmb.ByteModel())
+		compressedLen, err := decodeVarintFromDecoderV1(dec, mmb.ByteModel())
 		if err != nil {
 			return protoreflect.Value{}, err
 		}
@@ -325,7 +325,7 @@ func decodeFieldValue(fieldPath string, fd protoreflect.FieldDescriptor, dec *ar
 
 	case protoreflect.BytesKind:
 		// Decode length
-		length, err := decodeVarintFromDecoder(dec, model)
+		length, err := decodeVarintFromDecoderV1(dec, model)
 		if err != nil {
 			return protoreflect.Value{}, err
 		}
@@ -348,7 +348,7 @@ func decodeFieldValue(fieldPath string, fd protoreflect.FieldDescriptor, dec *ar
 }
 
 // decodeVarintFromDecoder decodes a varint from the decoder.
-func decodeVarintFromDecoder(dec *arithcode.Decoder, model arithcode.Model) (uint64, error) {
+func decodeVarintFromDecoderV1(dec *arithcode.Decoder, model arithcode.Model) (uint64, error) {
 	var value uint64
 	var shift uint
 	for {

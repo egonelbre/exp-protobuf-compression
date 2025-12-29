@@ -8,7 +8,7 @@ import (
 // ContextualModelBuilder creates highly specialized models based on
 // message type and field context within Meshtastic protocol messages.
 type ContextualModelBuilder struct {
-	*ModelBuilder
+	*ModelBuilderV1
 
 	// Context tracking
 	messageType     string // Current message type (Position, User, etc.)
@@ -24,7 +24,7 @@ type ContextualModelBuilder struct {
 // NewContextualModelBuilder creates a context-aware model builder.
 func NewContextualModelBuilder() *ContextualModelBuilder {
 	return &ContextualModelBuilder{
-		ModelBuilder: NewModelBuilder(),
+		ModelBuilderV1: NewModelBuilderV1(),
 		contextModels:          make(map[string]arithcode.Model),
 		enumPredictions:        getCommonEnumValues(),
 		booleanModels:          make(map[string]arithcode.Model),

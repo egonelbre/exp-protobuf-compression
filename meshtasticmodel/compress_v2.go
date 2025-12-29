@@ -19,7 +19,7 @@ import (
 // Instead of encoding a presence bit for each field, it encodes only present fields
 // using delta-encoded field numbers, significantly reducing overhead for sparse messages.
 func CompressV2(msg proto.Message, w io.Writer) error {
-	mmb := NewModelBuilder()
+	mmb := NewModelBuilderV1()
 	enc := arithcode.NewEncoder(w)
 
 	if err := compressMessageV2("", msg.ProtoReflect(), enc, mmb); err != nil {
@@ -30,7 +30,7 @@ func CompressV2(msg proto.Message, w io.Writer) error {
 }
 
 // compressMessageV2 recursively compresses with delta-encoded field numbers.
-func compressMessageV2(fieldPath string, msg protoreflect.Message, enc *arithcode.Encoder, mmb *ModelBuilder) error {
+func compressMessageV2(fieldPath string, msg protoreflect.Message, enc *arithcode.Encoder, mmb *ModelBuilderV1) error {
 	md := msg.Descriptor()
 	fields := md.Fields()
 
@@ -109,7 +109,7 @@ func compressMessageV2(fieldPath string, msg protoreflect.Message, enc *arithcod
 }
 
 // compressRepeatedFieldV2 compresses repeated fields.
-func compressRepeatedFieldV2(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, enc *arithcode.Encoder, mmb *ModelBuilder) error {
+func compressRepeatedFieldV2(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, enc *arithcode.Encoder, mmb *ModelBuilderV1) error {
 	lengthPath := fieldPath + "._length"
 	lengthModel := mmb.GetFieldModel(lengthPath, fd)
 	if lengthModel == nil {
@@ -142,7 +142,7 @@ func compressRepeatedFieldV2(fieldPath string, fd protoreflect.FieldDescriptor, 
 }
 
 // compressMapFieldV2 compresses map fields.
-func compressMapFieldV2(fieldPath string, fd protoreflect.FieldDescriptor, m protoreflect.Map, enc *arithcode.Encoder, mmb *ModelBuilder) error {
+func compressMapFieldV2(fieldPath string, fd protoreflect.FieldDescriptor, m protoreflect.Map, enc *arithcode.Encoder, mmb *ModelBuilderV1) error {
 	lengthPath := fieldPath + "._length"
 	lengthModel := mmb.GetFieldModel(lengthPath, fd)
 	if lengthModel == nil {
@@ -188,7 +188,7 @@ func compressMapFieldV2(fieldPath string, fd protoreflect.FieldDescriptor, m pro
 }
 
 // compressFieldValueV2 compresses field values with Meshtastic-specific logic.
-func compressFieldValueV2(fieldPath string, fd protoreflect.FieldDescriptor, value protoreflect.Value, enc *arithcode.Encoder, mmb *ModelBuilder) error {
+func compressFieldValueV2(fieldPath string, fd protoreflect.FieldDescriptor, value protoreflect.Value, enc *arithcode.Encoder, mmb *ModelBuilderV1) error {
 	// Special handling for Data.payload field
 	if fd.Name() == "payload" && fd.Kind() == protoreflect.BytesKind {
 		data := value.Bytes()
