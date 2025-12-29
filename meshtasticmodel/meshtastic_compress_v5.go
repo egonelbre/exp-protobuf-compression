@@ -1,4 +1,4 @@
-package pbmodel
+package meshtasticmodel
 
 import (
 	"bytes"
@@ -9,6 +9,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/egonelbre/exp-protobuf-compression/arithcode"
+	"github.com/egonelbre/exp-protobuf-compression/pbmodel"
 	"github.com/egonelbre/exp-protobuf-compression/meshtastic"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -44,18 +45,18 @@ func meshtasticCompressMessageV5(fieldPath string, msg protoreflect.Message, enc
 	// Iterate through all fields in order
 	for i := 0; i < fields.Len(); i++ {
 		fd := fields.Get(i)
-		currentPath := buildFieldPath(fieldPath, string(fd.Name()))
+		currentPath := pbmodel.BuildFieldPath(fieldPath, string(fd.Name()))
 
 		if !msg.Has(fd) {
 			// Field not set, encode a "not present" marker
-			if err := enc.Encode(0, mcb.boolModel); err != nil {
+			if err := enc.Encode(0, mcb.BoolModel()); err != nil {
 				return fmt.Errorf("field %s presence: %w", fd.Name(), err)
 			}
 			continue
 		}
 
 		// Field is present
-		if err := enc.Encode(1, mcb.boolModel); err != nil {
+		if err := enc.Encode(1, mcb.BoolModel()); err != nil {
 			return fmt.Errorf("field %s presence: %w", fd.Name(), err)
 		}
 
@@ -100,11 +101,11 @@ func meshtasticCompressRepeatedFieldV5(fieldPath string, fd protoreflect.FieldDe
 	lengthPath := fieldPath + "._length"
 	lengthModel := mcb.GetContextualFieldModel(lengthPath, fd)
 	if lengthModel == nil {
-		lengthModel = mcb.byteModel
+		lengthModel = mcb.ByteModel()
 	}
 
 	length := list.Len()
-	lengthBytes := encodeVarint(uint64(length))
+	lengthBytes := pbmodel.EncodeVarint(uint64(length))
 	for _, b := range lengthBytes {
 		if err := enc.Encode(int(b), lengthModel); err != nil {
 			return fmt.Errorf("list length: %w", err)
@@ -133,11 +134,11 @@ func meshtasticCompressMapFieldV5(fieldPath string, fd protoreflect.FieldDescrip
 	lengthPath := fieldPath + "._length"
 	lengthModel := mcb.GetContextualFieldModel(lengthPath, fd)
 	if lengthModel == nil {
-		lengthModel = mcb.byteModel
+		lengthModel = mcb.ByteModel()
 	}
 
 	length := m.Len()
-	lengthBytes := encodeVarint(uint64(length))
+	lengthBytes := pbmodel.EncodeVarint(uint64(length))
 	for _, b := range lengthBytes {
 		if err := enc.Encode(int(b), lengthModel); err != nil {
 			return fmt.Errorf("map length: %w", err)
@@ -196,7 +197,7 @@ func meshtasticCompressFieldValueV5(fieldPath string, fd protoreflect.FieldDescr
 		if isText {
 			textFlag = 1
 		}
-		if err := enc.Encode(textFlag, mcb.boolModel); err != nil {
+		if err := enc.Encode(textFlag, mcb.BoolModel()); err != nil {
 			return err
 		}
 
@@ -207,14 +208,14 @@ func meshtasticCompressFieldValueV5(fieldPath string, fd protoreflect.FieldDescr
 				return err
 			}
 			compressedBytes := buf.Bytes()
-			lengthBytes := encodeVarint(uint64(len(compressedBytes)))
+			lengthBytes := pbmodel.EncodeVarint(uint64(len(compressedBytes)))
 			for _, b := range lengthBytes {
-				if err := enc.Encode(int(b), mcb.byteModel); err != nil {
+				if err := enc.Encode(int(b), mcb.ByteModel()); err != nil {
 					return err
 				}
 			}
 			for _, b := range compressedBytes {
-				if err := enc.Encode(int(b), mcb.byteModel); err != nil {
+				if err := enc.Encode(int(b), mcb.ByteModel()); err != nil {
 					return err
 				}
 			}
@@ -240,9 +241,9 @@ func meshtasticCompressFieldValueV5(fieldPath string, fd protoreflect.FieldDescr
 		fieldName := string(fd.Name())
 		if predictedValue, hasPrediction := mcb.enumPredictions[fieldName]; hasPrediction {
 			if enumValue == predictedValue {
-				return enc.Encode(1, mcb.boolModel)
+				return enc.Encode(1, mcb.BoolModel())
 			}
-			if err := enc.Encode(0, mcb.boolModel); err != nil {
+			if err := enc.Encode(0, mcb.BoolModel()); err != nil {
 				return err
 			}
 		}
@@ -257,7 +258,7 @@ func meshtasticCompressFieldValueV5(fieldPath string, fd protoreflect.FieldDescr
 
 	case protoreflect.Int32Kind, protoreflect.Int64Kind:
 		val := value.Int()
-		bytes := encodeVarint(uint64(val))
+		bytes := pbmodel.EncodeVarint(uint64(val))
 		for _, b := range bytes {
 			if err := enc.Encode(int(b), model); err != nil {
 				return err
@@ -267,7 +268,7 @@ func meshtasticCompressFieldValueV5(fieldPath string, fd protoreflect.FieldDescr
 
 	case protoreflect.Uint32Kind, protoreflect.Uint64Kind:
 		val := value.Uint()
-		bytes := encodeVarint(val)
+		bytes := pbmodel.EncodeVarint(val)
 		for _, b := range bytes {
 			if err := enc.Encode(int(b), model); err != nil {
 				return err
@@ -277,8 +278,8 @@ func meshtasticCompressFieldValueV5(fieldPath string, fd protoreflect.FieldDescr
 
 	case protoreflect.Sint32Kind, protoreflect.Sint64Kind:
 		val := value.Int()
-		zigzag := zigzagEncode(val)
-		bytes := encodeVarint(zigzag)
+		zigzag := pbmodel.ZigzagEncode(val)
+		bytes := pbmodel.EncodeVarint(zigzag)
 		for _, b := range bytes {
 			if err := enc.Encode(int(b), model); err != nil {
 				return err
@@ -291,7 +292,7 @@ func meshtasticCompressFieldValueV5(fieldPath string, fd protoreflect.FieldDescr
 		bytes := make([]byte, 4)
 		binary.LittleEndian.PutUint32(bytes, val)
 		for _, b := range bytes {
-			if err := enc.Encode(int(b), mcb.byteModel); err != nil {
+			if err := enc.Encode(int(b), mcb.ByteModel()); err != nil {
 				return err
 			}
 		}
@@ -302,7 +303,7 @@ func meshtasticCompressFieldValueV5(fieldPath string, fd protoreflect.FieldDescr
 		bytes := make([]byte, 4)
 		binary.LittleEndian.PutUint32(bytes, uint32(val))
 		for _, b := range bytes {
-			if err := enc.Encode(int(b), mcb.byteModel); err != nil {
+			if err := enc.Encode(int(b), mcb.ByteModel()); err != nil {
 				return err
 			}
 		}
@@ -313,7 +314,7 @@ func meshtasticCompressFieldValueV5(fieldPath string, fd protoreflect.FieldDescr
 		bytes := make([]byte, 8)
 		binary.LittleEndian.PutUint64(bytes, val)
 		for _, b := range bytes {
-			if err := enc.Encode(int(b), mcb.byteModel); err != nil {
+			if err := enc.Encode(int(b), mcb.ByteModel()); err != nil {
 				return err
 			}
 		}
@@ -324,7 +325,7 @@ func meshtasticCompressFieldValueV5(fieldPath string, fd protoreflect.FieldDescr
 		bytes := make([]byte, 8)
 		binary.LittleEndian.PutUint64(bytes, uint64(val))
 		for _, b := range bytes {
-			if err := enc.Encode(int(b), mcb.byteModel); err != nil {
+			if err := enc.Encode(int(b), mcb.ByteModel()); err != nil {
 				return err
 			}
 		}
@@ -336,7 +337,7 @@ func meshtasticCompressFieldValueV5(fieldPath string, fd protoreflect.FieldDescr
 		bytes := make([]byte, 4)
 		binary.LittleEndian.PutUint32(bytes, bits)
 		// Use context-aware model if available
-		if model != nil && model != mcb.boolModel {
+		if model != nil && model != mcb.BoolModel() {
 			for _, b := range bytes {
 				if err := enc.Encode(int(b), model); err != nil {
 					return err
@@ -344,7 +345,7 @@ func meshtasticCompressFieldValueV5(fieldPath string, fd protoreflect.FieldDescr
 			}
 		} else {
 			for _, b := range bytes {
-				if err := enc.Encode(int(b), mcb.byteModel); err != nil {
+				if err := enc.Encode(int(b), mcb.ByteModel()); err != nil {
 					return err
 				}
 			}
@@ -357,7 +358,7 @@ func meshtasticCompressFieldValueV5(fieldPath string, fd protoreflect.FieldDescr
 		bytes := make([]byte, 8)
 		binary.LittleEndian.PutUint64(bytes, bits)
 		for _, b := range bytes {
-			if err := enc.Encode(int(b), mcb.byteModel); err != nil {
+			if err := enc.Encode(int(b), mcb.ByteModel()); err != nil {
 				return err
 			}
 		}
@@ -370,14 +371,14 @@ func meshtasticCompressFieldValueV5(fieldPath string, fd protoreflect.FieldDescr
 			return err
 		}
 		compressedBytes := buf.Bytes()
-		lengthBytes := encodeVarint(uint64(len(compressedBytes)))
+		lengthBytes := pbmodel.EncodeVarint(uint64(len(compressedBytes)))
 		for _, b := range lengthBytes {
-			if err := enc.Encode(int(b), mcb.byteModel); err != nil {
+			if err := enc.Encode(int(b), mcb.ByteModel()); err != nil {
 				return err
 			}
 		}
 		for _, b := range compressedBytes {
-			if err := enc.Encode(int(b), mcb.byteModel); err != nil {
+			if err := enc.Encode(int(b), mcb.ByteModel()); err != nil {
 				return err
 			}
 		}
@@ -385,14 +386,14 @@ func meshtasticCompressFieldValueV5(fieldPath string, fd protoreflect.FieldDescr
 
 	case protoreflect.BytesKind:
 		data := value.Bytes()
-		lengthBytes := encodeVarint(uint64(len(data)))
+		lengthBytes := pbmodel.EncodeVarint(uint64(len(data)))
 		for _, b := range lengthBytes {
 			if err := enc.Encode(int(b), model); err != nil {
 				return err
 			}
 		}
 		for _, b := range data {
-			if err := enc.Encode(int(b), mcb.byteModel); err != nil {
+			if err := enc.Encode(int(b), mcb.ByteModel()); err != nil {
 				return err
 			}
 		}

@@ -1,10 +1,11 @@
-package pbmodel
+package meshtasticmodel
 
 import (
 	"bytes"
 	"testing"
 
 	"github.com/egonelbre/exp-protobuf-compression/meshtastic"
+	"github.com/egonelbre/exp-protobuf-compression/pbmodel"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -610,7 +611,7 @@ func testMeshtasticRoundtrip(t *testing.T, name string, msg proto.Message) {
 
 	// Compress
 	var buf bytes.Buffer
-	err := Compress(msg, &buf)
+	err := pbmodel.Compress(msg, &buf)
 	if err != nil {
 		t.Fatalf("%s: Compress failed: %v", name, err)
 	}
@@ -623,7 +624,7 @@ func testMeshtasticRoundtrip(t *testing.T, name string, msg proto.Message) {
 
 	// Decompress
 	result := msg.ProtoReflect().New().Interface()
-	err = Decompress(&buf, result)
+	err = pbmodel.Decompress(&buf, result)
 	if err != nil {
 		t.Fatalf("%s: Decompress failed: %v", name, err)
 	}

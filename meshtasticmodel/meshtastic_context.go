@@ -1,4 +1,4 @@
-package pbmodel
+package meshtasticmodel
 
 import (
 	"github.com/egonelbre/exp-protobuf-compression/arithcode"

@@ -1,4 +1,4 @@
-package pbmodel
+package meshtasticmodel
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"math"
 
 	"github.com/egonelbre/exp-protobuf-compression/arithcode"
+	"github.com/egonelbre/exp-protobuf-compression/pbmodel"
 	"github.com/egonelbre/exp-protobuf-compression/meshtastic"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -41,10 +42,10 @@ func meshtasticDecompressMessageV5(fieldPath string, msg protoreflect.Message, d
 	// Iterate through all fields in order
 	for i := 0; i < fields.Len(); i++ {
 		fd := fields.Get(i)
-		currentPath := buildFieldPath(fieldPath, string(fd.Name()))
+		currentPath := pbmodel.BuildFieldPath(fieldPath, string(fd.Name()))
 
 		// Check if field is present
-		present, err := dec.Decode(mcb.boolModel)
+		present, err := dec.Decode(mcb.BoolModel())
 		if err != nil {
 			return fmt.Errorf("field %s presence: %w", fd.Name(), err)
 		}
@@ -98,7 +99,7 @@ func meshtasticDecompressRepeatedFieldV5(fieldPath string, fd protoreflect.Field
 	lengthPath := fieldPath + "._length"
 	lengthModel := mcb.GetContextualFieldModel(lengthPath, fd)
 	if lengthModel == nil {
-		lengthModel = mcb.byteModel
+		lengthModel = mcb.ByteModel()
 	}
 
 	// Decode length
@@ -113,7 +114,7 @@ func meshtasticDecompressRepeatedFieldV5(fieldPath string, fd protoreflect.Field
 			break
 		}
 	}
-	length := int(decodeVarint(lengthBytes))
+	length := int(pbmodel.DecodeVarint(lengthBytes))
 
 	elementPath := fieldPath + "[]"
 	for i := 0; i < length; i++ {
@@ -140,7 +141,7 @@ func meshtasticDecompressMapFieldV5(fieldPath string, fd protoreflect.FieldDescr
 	lengthPath := fieldPath + "._length"
 	lengthModel := mcb.GetContextualFieldModel(lengthPath, fd)
 	if lengthModel == nil {
-		lengthModel = mcb.byteModel
+		lengthModel = mcb.ByteModel()
 	}
 
 	// Decode length
@@ -155,7 +156,7 @@ func meshtasticDecompressMapFieldV5(fieldPath string, fd protoreflect.FieldDescr
 			break
 		}
 	}
-	length := int(decodeVarint(lengthBytes))
+	length := int(pbmodel.DecodeVarint(lengthBytes))
 
 	keyFd := fd.MapKey()
 	valueFd := fd.MapValue()
@@ -196,7 +197,7 @@ func meshtasticDecompressFieldValueV5(fieldPath string, fd protoreflect.FieldDes
 	// Special handling for Data.payload field
 	if fd.Name() == "payload" && fd.Kind() == protoreflect.BytesKind {
 		// Decode text flag
-		textFlag, err := dec.Decode(mcb.boolModel)
+		textFlag, err := dec.Decode(mcb.BoolModel())
 		if err != nil {
 			return protoreflect.Value{}, err
 		}
@@ -205,7 +206,7 @@ func meshtasticDecompressFieldValueV5(fieldPath string, fd protoreflect.FieldDes
 			// Decode as compressed text
 			var lengthBytes []byte
 			for {
-				symbol, err := dec.Decode(mcb.byteModel)
+				symbol, err := dec.Decode(mcb.ByteModel())
 				if err != nil {
 					return protoreflect.Value{}, err
 				}
@@ -214,11 +215,11 @@ func meshtasticDecompressFieldValueV5(fieldPath string, fd protoreflect.FieldDes
 					break
 				}
 			}
-			compressedLen := int(decodeVarint(lengthBytes))
+			compressedLen := int(pbmodel.DecodeVarint(lengthBytes))
 
 			compressedBytes := make([]byte, compressedLen)
 			for i := 0; i < compressedLen; i++ {
-				symbol, err := dec.Decode(mcb.byteModel)
+				symbol, err := dec.Decode(mcb.ByteModel())
 				if err != nil {
 					return protoreflect.Value{}, err
 				}
@@ -247,7 +248,7 @@ func meshtasticDecompressFieldValueV5(fieldPath string, fd protoreflect.FieldDes
 		// Check if this enum has a predicted common value
 		fieldName := string(fd.Name())
 		if predictedValue, hasPrediction := mcb.enumPredictions[fieldName]; hasPrediction {
-			flag, err := dec.Decode(mcb.boolModel)
+			flag, err := dec.Decode(mcb.BoolModel())
 			if err != nil {
 				return protoreflect.Value{}, err
 			}
@@ -279,7 +280,7 @@ func meshtasticDecompressFieldValueV5(fieldPath string, fd protoreflect.FieldDes
 				break
 			}
 		}
-		val := int64(decodeVarint(valueBytes))
+		val := int64(pbmodel.DecodeVarint(valueBytes))
 		if fd.Kind() == protoreflect.Int32Kind {
 			return protoreflect.ValueOfInt32(int32(val)), nil
 		}
@@ -297,7 +298,7 @@ func meshtasticDecompressFieldValueV5(fieldPath string, fd protoreflect.FieldDes
 				break
 			}
 		}
-		val := decodeVarint(valueBytes)
+		val := pbmodel.DecodeVarint(valueBytes)
 		if fd.Kind() == protoreflect.Uint32Kind {
 			return protoreflect.ValueOfUint32(uint32(val)), nil
 		}
@@ -315,8 +316,8 @@ func meshtasticDecompressFieldValueV5(fieldPath string, fd protoreflect.FieldDes
 				break
 			}
 		}
-		zigzag := decodeVarint(valueBytes)
-		val := zigzagDecode(zigzag)
+		zigzag := pbmodel.DecodeVarint(valueBytes)
+		val := pbmodel.ZigzagDecode(zigzag)
 		if fd.Kind() == protoreflect.Sint32Kind {
 			return protoreflect.ValueOfInt32(int32(val)), nil
 		}
@@ -325,7 +326,7 @@ func meshtasticDecompressFieldValueV5(fieldPath string, fd protoreflect.FieldDes
 	case protoreflect.Fixed32Kind:
 		bytes := make([]byte, 4)
 		for i := 0; i < 4; i++ {
-			symbol, err := dec.Decode(mcb.byteModel)
+			symbol, err := dec.Decode(mcb.ByteModel())
 			if err != nil {
 				return protoreflect.Value{}, err
 			}
@@ -337,7 +338,7 @@ func meshtasticDecompressFieldValueV5(fieldPath string, fd protoreflect.FieldDes
 	case protoreflect.Sfixed32Kind:
 		bytes := make([]byte, 4)
 		for i := 0; i < 4; i++ {
-			symbol, err := dec.Decode(mcb.byteModel)
+			symbol, err := dec.Decode(mcb.ByteModel())
 			if err != nil {
 				return protoreflect.Value{}, err
 			}
@@ -349,7 +350,7 @@ func meshtasticDecompressFieldValueV5(fieldPath string, fd protoreflect.FieldDes
 	case protoreflect.Fixed64Kind:
 		bytes := make([]byte, 8)
 		for i := 0; i < 8; i++ {
-			symbol, err := dec.Decode(mcb.byteModel)
+			symbol, err := dec.Decode(mcb.ByteModel())
 			if err != nil {
 				return protoreflect.Value{}, err
 			}
@@ -361,7 +362,7 @@ func meshtasticDecompressFieldValueV5(fieldPath string, fd protoreflect.FieldDes
 	case protoreflect.Sfixed64Kind:
 		bytes := make([]byte, 8)
 		for i := 0; i < 8; i++ {
-			symbol, err := dec.Decode(mcb.byteModel)
+			symbol, err := dec.Decode(mcb.ByteModel())
 			if err != nil {
 				return protoreflect.Value{}, err
 			}
@@ -373,7 +374,7 @@ func meshtasticDecompressFieldValueV5(fieldPath string, fd protoreflect.FieldDes
 	case protoreflect.FloatKind:
 		bytes := make([]byte, 4)
 		// Use context-aware model if available
-		if model != nil && model != mcb.boolModel {
+		if model != nil && model != mcb.BoolModel() {
 			for i := 0; i < 4; i++ {
 				symbol, err := dec.Decode(model)
 				if err != nil {
@@ -383,7 +384,7 @@ func meshtasticDecompressFieldValueV5(fieldPath string, fd protoreflect.FieldDes
 			}
 		} else {
 			for i := 0; i < 4; i++ {
-				symbol, err := dec.Decode(mcb.byteModel)
+				symbol, err := dec.Decode(mcb.ByteModel())
 				if err != nil {
 					return protoreflect.Value{}, err
 				}
@@ -397,7 +398,7 @@ func meshtasticDecompressFieldValueV5(fieldPath string, fd protoreflect.FieldDes
 	case protoreflect.DoubleKind:
 		bytes := make([]byte, 8)
 		for i := 0; i < 8; i++ {
-			symbol, err := dec.Decode(mcb.byteModel)
+			symbol, err := dec.Decode(mcb.ByteModel())
 			if err != nil {
 				return protoreflect.Value{}, err
 			}
@@ -411,7 +412,7 @@ func meshtasticDecompressFieldValueV5(fieldPath string, fd protoreflect.FieldDes
 		// Decode compressed length
 		var lengthBytes []byte
 		for {
-			symbol, err := dec.Decode(mcb.byteModel)
+			symbol, err := dec.Decode(mcb.ByteModel())
 			if err != nil {
 				return protoreflect.Value{}, err
 			}
@@ -420,12 +421,12 @@ func meshtasticDecompressFieldValueV5(fieldPath string, fd protoreflect.FieldDes
 				break
 			}
 		}
-		compressedLen := int(decodeVarint(lengthBytes))
+		compressedLen := int(pbmodel.DecodeVarint(lengthBytes))
 
 		// Decode compressed bytes
 		compressedBytes := make([]byte, compressedLen)
 		for i := 0; i < compressedLen; i++ {
-			symbol, err := dec.Decode(mcb.byteModel)
+			symbol, err := dec.Decode(mcb.ByteModel())
 			if err != nil {
 				return protoreflect.Value{}, err
 			}
@@ -452,12 +453,12 @@ func meshtasticDecompressFieldValueV5(fieldPath string, fd protoreflect.FieldDes
 				break
 			}
 		}
-		length := int(decodeVarint(lengthBytes))
+		length := int(pbmodel.DecodeVarint(lengthBytes))
 
 		// Decode bytes
 		data := make([]byte, length)
 		for i := 0; i < length; i++ {
-			symbol, err := dec.Decode(mcb.byteModel)
+			symbol, err := dec.Decode(mcb.ByteModel())
 			if err != nil {
 				return protoreflect.Value{}, err
 			}

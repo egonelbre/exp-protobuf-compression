@@ -34,7 +34,7 @@ func adaptiveCompressMessage(fieldPath string, msg protoreflect.Message, enc *ar
 	// Iterate through all fields in order
 	for i := 0; i < fields.Len(); i++ {
 		fd := fields.Get(i)
-		currentPath := buildFieldPath(fieldPath, string(fd.Name()))
+		currentPath := BuildFieldPath(fieldPath, string(fd.Name()))
 
 		if !msg.Has(fd) {
 			// Field not set, encode a "not present" marker
@@ -56,7 +56,7 @@ func adaptiveCompressMessage(fieldPath string, msg protoreflect.Message, enc *ar
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		} else if fd.IsMap() {
-			if err := adaptiveCompressMapField(currentPath, fd, value.Map(), enc, amb); err != nil {
+			if err := AdaptiveCompressMapField(currentPath, fd, value.Map(), enc, amb); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		} else if fd.Kind() == protoreflect.MessageKind {
@@ -85,7 +85,7 @@ func adaptiveCompressRepeatedField(fieldPath string, fd protoreflect.FieldDescri
 	}
 
 	length := list.Len()
-	lengthBytes := encodeVarint(uint64(length))
+	lengthBytes := EncodeVarint(uint64(length))
 	for _, b := range lengthBytes {
 		if err := enc.Encode(int(b), lengthModel); err != nil {
 			return fmt.Errorf("list length: %w", err)
@@ -111,7 +111,7 @@ func adaptiveCompressRepeatedField(fieldPath string, fd protoreflect.FieldDescri
 }
 
 // adaptiveCompressMapField compresses a map field with field-specific models.
-func adaptiveCompressMapField(fieldPath string, fd protoreflect.FieldDescriptor, m protoreflect.Map, enc *arithcode.Encoder, amb *AdaptiveModelBuilder) error {
+func AdaptiveCompressMapField(fieldPath string, fd protoreflect.FieldDescriptor, m protoreflect.Map, enc *arithcode.Encoder, amb *AdaptiveModelBuilder) error {
 	// Encode the length
 	lengthPath := fieldPath + "._length"
 	lengthModel := amb.GetFieldModel(lengthPath, fd)
@@ -120,7 +120,7 @@ func adaptiveCompressMapField(fieldPath string, fd protoreflect.FieldDescriptor,
 	}
 
 	length := m.Len()
-	lengthBytes := encodeVarint(uint64(length))
+	lengthBytes := EncodeVarint(uint64(length))
 	for _, b := range lengthBytes {
 		if err := enc.Encode(int(b), lengthModel); err != nil {
 			return fmt.Errorf("map length: %w", err)
@@ -185,7 +185,7 @@ func adaptiveCompressFieldValue(fieldPath string, fd protoreflect.FieldDescripto
 
 	case protoreflect.Int32Kind, protoreflect.Int64Kind:
 		val := value.Int()
-		bytes := encodeVarint(uint64(val))
+		bytes := EncodeVarint(uint64(val))
 		for _, b := range bytes {
 			if err := enc.Encode(int(b), model); err != nil {
 				return err
@@ -195,7 +195,7 @@ func adaptiveCompressFieldValue(fieldPath string, fd protoreflect.FieldDescripto
 
 	case protoreflect.Uint32Kind, protoreflect.Uint64Kind:
 		val := value.Uint()
-		bytes := encodeVarint(val)
+		bytes := EncodeVarint(val)
 		for _, b := range bytes {
 			if err := enc.Encode(int(b), model); err != nil {
 				return err
@@ -205,8 +205,8 @@ func adaptiveCompressFieldValue(fieldPath string, fd protoreflect.FieldDescripto
 
 	case protoreflect.Sint32Kind, protoreflect.Sint64Kind:
 		val := value.Int()
-		zigzag := zigzagEncode(val)
-		bytes := encodeVarint(zigzag)
+		zigzag := ZigzagEncode(val)
+		bytes := EncodeVarint(zigzag)
 		for _, b := range bytes {
 			if err := enc.Encode(int(b), model); err != nil {
 				return err
@@ -291,7 +291,7 @@ func adaptiveCompressFieldValue(fieldPath string, fd protoreflect.FieldDescripto
 		}
 		// Encode the compressed string bytes
 		compressedBytes := buf.Bytes()
-		lengthBytes := encodeVarint(uint64(len(compressedBytes)))
+		lengthBytes := EncodeVarint(uint64(len(compressedBytes)))
 		for _, b := range lengthBytes {
 			if err := enc.Encode(int(b), amb.byteModel); err != nil {
 				return err
@@ -307,7 +307,7 @@ func adaptiveCompressFieldValue(fieldPath string, fd protoreflect.FieldDescripto
 	case protoreflect.BytesKind:
 		data := value.Bytes()
 		// Encode length
-		lengthBytes := encodeVarint(uint64(len(data)))
+		lengthBytes := EncodeVarint(uint64(len(data)))
 		for _, b := range lengthBytes {
 			if err := enc.Encode(int(b), model); err != nil {
 				return err

@@ -28,6 +28,21 @@ func NewAdaptiveModelBuilder() *AdaptiveModelBuilder {
 	}
 }
 
+// BoolModel returns the boolean model.
+func (amb *AdaptiveModelBuilder) BoolModel() arithcode.Model {
+	return amb.boolModel
+}
+
+// ByteModel returns the byte model.
+func (amb *AdaptiveModelBuilder) ByteModel() arithcode.Model {
+	return amb.byteModel
+}
+
+// EnglishModel returns the English text model.
+func (amb *AdaptiveModelBuilder) EnglishModel() *arithcode.EnglishModel {
+	return amb.englishModel
+}
+
 // GetFieldModel returns a field-specific model for the given field descriptor.
 // The model is created based on the field's path in the message hierarchy,
 // allowing different fields of the same type to have different compression characteristics.
@@ -149,8 +164,8 @@ func containsPattern(fieldPath string, patterns ...string) bool {
 	return false
 }
 
-// buildFieldPath constructs a unique path for a field in the message hierarchy.
-func buildFieldPath(parentPath string, fieldName string) string {
+// BuildFieldPath constructs a unique path for a field in the message hierarchy.
+func BuildFieldPath(parentPath string, fieldName string) string {
 	if parentPath == "" {
 		return fieldName
 	}

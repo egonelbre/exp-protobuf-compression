@@ -1,10 +1,11 @@
-package pbmodel
+package meshtasticmodel
 
 import (
 	"fmt"
 	"io"
 
 	"github.com/egonelbre/exp-protobuf-compression/arithcode"
+	"github.com/egonelbre/exp-protobuf-compression/pbmodel"
 	"github.com/egonelbre/exp-protobuf-compression/meshtastic"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -53,7 +54,7 @@ func meshtasticCompressMessageV3(fieldPath string, msg protoreflect.Message, enc
 	if useDeltaEncoding {
 		strategyFlag = 1
 	}
-	if err := enc.Encode(strategyFlag, mmb.boolModel); err != nil {
+	if err := enc.Encode(strategyFlag, mmb.BoolModel()); err != nil {
 		return fmt.Errorf("strategy flag: %w", err)
 	}
 
@@ -80,14 +81,14 @@ func meshtasticCompressMessagePresenceBits(fieldPath string, msg protoreflect.Me
 		if presentMap[fd.Number()] {
 			present = 1
 		}
-		if err := enc.Encode(present, mmb.boolModel); err != nil {
+		if err := enc.Encode(present, mmb.BoolModel()); err != nil {
 			return fmt.Errorf("field %s presence: %w", fd.Name(), err)
 		}
 	}
 
 	// Encode present field values
 	for _, fd := range presentFields {
-		currentPath := buildFieldPath(fieldPath, string(fd.Name()))
+		currentPath := pbmodel.BuildFieldPath(fieldPath, string(fd.Name()))
 		value := msg.Get(fd)
 
 		// Track portnum
@@ -115,9 +116,9 @@ func meshtasticCompressMessageDelta(fieldPath string, msg protoreflect.Message, 
 	md := msg.Descriptor()
 
 	// Encode number of present fields
-	numPresentBytes := encodeVarint(uint64(len(presentFields)))
+	numPresentBytes := pbmodel.EncodeVarint(uint64(len(presentFields)))
 	for _, b := range numPresentBytes {
-		if err := enc.Encode(int(b), mmb.byteModel); err != nil {
+		if err := enc.Encode(int(b), mmb.ByteModel()); err != nil {
 			return fmt.Errorf("num present: %w", err)
 		}
 	}
@@ -125,14 +126,14 @@ func meshtasticCompressMessageDelta(fieldPath string, msg protoreflect.Message, 
 	// Encode fields with deltas
 	lastFieldNum := 0
 	for _, fd := range presentFields {
-		currentPath := buildFieldPath(fieldPath, string(fd.Name()))
+		currentPath := pbmodel.BuildFieldPath(fieldPath, string(fd.Name()))
 		fieldNum := int(fd.Number())
 
 		// Encode delta
 		delta := fieldNum - lastFieldNum
-		deltaBytes := encodeVarint(uint64(delta))
+		deltaBytes := pbmodel.EncodeVarint(uint64(delta))
 		for _, b := range deltaBytes {
-			if err := enc.Encode(int(b), mmb.byteModel); err != nil {
+			if err := enc.Encode(int(b), mmb.ByteModel()); err != nil {
 				return fmt.Errorf("field delta: %w", err)
 			}
 		}
@@ -177,11 +178,11 @@ func meshtasticCompressRepeatedFieldV3(fieldPath string, fd protoreflect.FieldDe
 	lengthPath := fieldPath + "._length"
 	lengthModel := mmb.GetFieldModel(lengthPath, fd)
 	if lengthModel == nil {
-		lengthModel = mmb.byteModel
+		lengthModel = mmb.ByteModel()
 	}
 
 	length := list.Len()
-	lengthBytes := encodeVarint(uint64(length))
+	lengthBytes := pbmodel.EncodeVarint(uint64(length))
 	for _, b := range lengthBytes {
 		if err := enc.Encode(int(b), lengthModel); err != nil {
 			return fmt.Errorf("list length: %w", err)
@@ -210,11 +211,11 @@ func meshtasticCompressMapFieldV3(fieldPath string, fd protoreflect.FieldDescrip
 	lengthPath := fieldPath + "._length"
 	lengthModel := mmb.GetFieldModel(lengthPath, fd)
 	if lengthModel == nil {
-		lengthModel = mmb.byteModel
+		lengthModel = mmb.ByteModel()
 	}
 
 	length := m.Len()
-	lengthBytes := encodeVarint(uint64(length))
+	lengthBytes := pbmodel.EncodeVarint(uint64(length))
 	for _, b := range lengthBytes {
 		if err := enc.Encode(int(b), lengthModel); err != nil {
 			return fmt.Errorf("map length: %w", err)

@@ -187,7 +187,7 @@ func decompressFieldValue(fd protoreflect.FieldDescriptor, dec *arithcode.Decode
 		if err != nil {
 			return protoreflect.Value{}, err
 		}
-		val := zigzagDecode(zigzag)
+		val := ZigzagDecode(zigzag)
 		return protoreflect.ValueOfInt32(int32(val)), nil
 
 	case protoreflect.Sint64Kind:
@@ -195,7 +195,7 @@ func decompressFieldValue(fd protoreflect.FieldDescriptor, dec *arithcode.Decode
 		if err != nil {
 			return protoreflect.Value{}, err
 		}
-		val := zigzagDecode(zigzag)
+		val := ZigzagDecode(zigzag)
 		return protoreflect.ValueOfInt64(val), nil
 
 	case protoreflect.Fixed32Kind:

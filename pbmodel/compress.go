@@ -70,7 +70,7 @@ func compressMessage(msg protoreflect.Message, enc *arithcode.Encoder, mb *Model
 func compressRepeatedField(fd protoreflect.FieldDescriptor, list protoreflect.List, enc *arithcode.Encoder, mb *ModelBuilder) error {
 	// Encode the length
 	length := list.Len()
-	lengthBytes := encodeVarint(uint64(length))
+	lengthBytes := EncodeVarint(uint64(length))
 	for _, b := range lengthBytes {
 		if err := enc.Encode(int(b), mb.varintModel); err != nil {
 			return fmt.Errorf("list length: %w", err)
@@ -92,7 +92,7 @@ func compressRepeatedField(fd protoreflect.FieldDescriptor, list protoreflect.Li
 func compressMapField(fd protoreflect.FieldDescriptor, m protoreflect.Map, enc *arithcode.Encoder, mb *ModelBuilder) error {
 	// Encode the length
 	length := m.Len()
-	lengthBytes := encodeVarint(uint64(length))
+	lengthBytes := EncodeVarint(uint64(length))
 	for _, b := range lengthBytes {
 		if err := enc.Encode(int(b), mb.varintModel); err != nil {
 			return fmt.Errorf("map length: %w", err)
@@ -148,7 +148,7 @@ func compressFieldValue(fd protoreflect.FieldDescriptor, value protoreflect.Valu
 
 	case protoreflect.Int32Kind, protoreflect.Int64Kind:
 		val := value.Int()
-		bytes := encodeVarint(uint64(val))
+		bytes := EncodeVarint(uint64(val))
 		for _, b := range bytes {
 			if err := enc.Encode(int(b), mb.varintModel); err != nil {
 				return err
@@ -158,7 +158,7 @@ func compressFieldValue(fd protoreflect.FieldDescriptor, value protoreflect.Valu
 
 	case protoreflect.Uint32Kind, protoreflect.Uint64Kind:
 		val := value.Uint()
-		bytes := encodeVarint(val)
+		bytes := EncodeVarint(val)
 		for _, b := range bytes {
 			if err := enc.Encode(int(b), mb.varintModel); err != nil {
 				return err
@@ -168,8 +168,8 @@ func compressFieldValue(fd protoreflect.FieldDescriptor, value protoreflect.Valu
 
 	case protoreflect.Sint32Kind, protoreflect.Sint64Kind:
 		val := value.Int()
-		zigzag := zigzagEncode(val)
-		bytes := encodeVarint(zigzag)
+		zigzag := ZigzagEncode(val)
+		bytes := EncodeVarint(zigzag)
 		for _, b := range bytes {
 			if err := enc.Encode(int(b), mb.varintModel); err != nil {
 				return err
@@ -254,7 +254,7 @@ func compressFieldValue(fd protoreflect.FieldDescriptor, value protoreflect.Valu
 		}
 		// Encode the compressed string bytes
 		compressedBytes := buf.Bytes()
-		lengthBytes := encodeVarint(uint64(len(compressedBytes)))
+		lengthBytes := EncodeVarint(uint64(len(compressedBytes)))
 		for _, b := range lengthBytes {
 			if err := enc.Encode(int(b), mb.varintModel); err != nil {
 				return err
@@ -270,7 +270,7 @@ func compressFieldValue(fd protoreflect.FieldDescriptor, value protoreflect.Valu
 	case protoreflect.BytesKind:
 		data := value.Bytes()
 		// Encode length
-		lengthBytes := encodeVarint(uint64(len(data)))
+		lengthBytes := EncodeVarint(uint64(len(data)))
 		for _, b := range lengthBytes {
 			if err := enc.Encode(int(b), mb.varintModel); err != nil {
 				return err

@@ -1,10 +1,11 @@
-package pbmodel
+package meshtasticmodel
 
 import (
 	"fmt"
 	"io"
 
 	"github.com/egonelbre/exp-protobuf-compression/arithcode"
+	"github.com/egonelbre/exp-protobuf-compression/pbmodel"
 	"github.com/egonelbre/exp-protobuf-compression/meshtastic"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -24,7 +25,7 @@ func MeshtasticDecompressV3(r io.Reader, msg proto.Message) error {
 // meshtasticDecompressMessageV3 uses hybrid decoding strategy.
 func meshtasticDecompressMessageV3(fieldPath string, msg protoreflect.Message, dec *arithcode.Decoder, mmb *MeshtasticModelBuilder) error {
 	// Decode strategy flag
-	strategyFlag, err := dec.Decode(mmb.boolModel)
+	strategyFlag, err := dec.Decode(mmb.BoolModel())
 	if err != nil {
 		return fmt.Errorf("strategy flag: %w", err)
 	}
@@ -46,7 +47,7 @@ func meshtasticDecompressMessagePresenceBits(fieldPath string, msg protoreflect.
 	var presentFields []protoreflect.FieldDescriptor
 	for i := 0; i < fields.Len(); i++ {
 		fd := fields.Get(i)
-		present, err := dec.Decode(mmb.boolModel)
+		present, err := dec.Decode(mmb.BoolModel())
 		if err != nil {
 			return fmt.Errorf("field %s presence: %w", fd.Name(), err)
 		}
@@ -57,7 +58,7 @@ func meshtasticDecompressMessagePresenceBits(fieldPath string, msg protoreflect.
 
 	// Decode field values
 	for _, fd := range presentFields {
-		currentPath := buildFieldPath(fieldPath, string(fd.Name()))
+		currentPath := pbmodel.BuildFieldPath(fieldPath, string(fd.Name()))
 
 		// Track portnum
 		if fd.Name() == "portnum" && fd.Kind() == protoreflect.EnumKind {
@@ -89,7 +90,7 @@ func meshtasticDecompressMessageDelta(fieldPath string, msg protoreflect.Message
 	md := msg.Descriptor()
 
 	// Decode number of present fields
-	numPresent, err := meshtasticDecodeVarintFromDecoderV2(dec, mmb.byteModel)
+	numPresent, err := meshtasticDecodeVarintFromDecoderV2(dec, mmb.ByteModel())
 	if err != nil {
 		return fmt.Errorf("num present: %w", err)
 	}
@@ -100,7 +101,7 @@ func meshtasticDecompressMessageDelta(fieldPath string, msg protoreflect.Message
 
 	for i := 0; i < int(numPresent); i++ {
 		// Decode delta
-		delta, err := meshtasticDecodeVarintFromDecoderV2(dec, mmb.byteModel)
+		delta, err := meshtasticDecodeVarintFromDecoderV2(dec, mmb.ByteModel())
 		if err != nil {
 			return fmt.Errorf("field delta: %w", err)
 		}
@@ -115,7 +116,7 @@ func meshtasticDecompressMessageDelta(fieldPath string, msg protoreflect.Message
 		}
 
 		presentFields = append(presentFields, fd)
-		currentPath := buildFieldPath(fieldPath, string(fd.Name()))
+		currentPath := pbmodel.BuildFieldPath(fieldPath, string(fd.Name()))
 
 		// Track portnum
 		if fd.Name() == "portnum" && fd.Kind() == protoreflect.EnumKind {
@@ -168,7 +169,7 @@ func meshtasticDecompressRepeatedFieldV3(fieldPath string, fd protoreflect.Field
 	lengthPath := fieldPath + "._length"
 	lengthModel := mmb.GetFieldModel(lengthPath, fd)
 	if lengthModel == nil {
-		lengthModel = mmb.byteModel
+		lengthModel = mmb.ByteModel()
 	}
 
 	length, err := meshtasticDecodeVarintFromDecoderV2(dec, lengthModel)
@@ -201,7 +202,7 @@ func meshtasticDecompressMapFieldV3(fieldPath string, fd protoreflect.FieldDescr
 	lengthPath := fieldPath + "._length"
 	lengthModel := mmb.GetFieldModel(lengthPath, fd)
 	if lengthModel == nil {
-		lengthModel = mmb.byteModel
+		lengthModel = mmb.ByteModel()
 	}
 
 	length, err := meshtasticDecodeVarintFromDecoderV2(dec, lengthModel)

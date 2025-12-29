@@ -32,7 +32,7 @@ func adaptiveDecompressMessage(fieldPath string, msg protoreflect.Message, dec *
 	// Iterate through all fields in order
 	for i := 0; i < fields.Len(); i++ {
 		fd := fields.Get(i)
-		currentPath := buildFieldPath(fieldPath, string(fd.Name()))
+		currentPath := BuildFieldPath(fieldPath, string(fd.Name()))
 
 		// Decode presence marker
 		present, err := dec.Decode(amb.boolModel)
@@ -52,7 +52,7 @@ func adaptiveDecompressMessage(fieldPath string, msg protoreflect.Message, dec *
 			}
 		} else if fd.IsMap() {
 			m := msg.Mutable(fd).Map()
-			if err := adaptiveDecompressMapField(currentPath, fd, m, dec, amb); err != nil {
+			if err := AdaptiveDecompressMapField(currentPath, fd, m, dec, amb); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		} else if fd.Kind() == protoreflect.MessageKind {
@@ -109,7 +109,7 @@ func adaptiveDecompressRepeatedField(fieldPath string, fd protoreflect.FieldDesc
 }
 
 // adaptiveDecompressMapField decompresses a map field using field-specific models.
-func adaptiveDecompressMapField(fieldPath string, fd protoreflect.FieldDescriptor, m protoreflect.Map, dec *arithcode.Decoder, amb *AdaptiveModelBuilder) error {
+func AdaptiveDecompressMapField(fieldPath string, fd protoreflect.FieldDescriptor, m protoreflect.Map, dec *arithcode.Decoder, amb *AdaptiveModelBuilder) error {
 	// Decode the length
 	lengthPath := fieldPath + "._length"
 	lengthModel := amb.GetFieldModel(lengthPath, fd)
@@ -212,7 +212,7 @@ func adaptiveDecompressFieldValue(fieldPath string, fd protoreflect.FieldDescrip
 		if err != nil {
 			return protoreflect.Value{}, err
 		}
-		val := zigzagDecode(zigzag)
+		val := ZigzagDecode(zigzag)
 		return protoreflect.ValueOfInt32(int32(val)), nil
 
 	case protoreflect.Sint64Kind:
@@ -220,7 +220,7 @@ func adaptiveDecompressFieldValue(fieldPath string, fd protoreflect.FieldDescrip
 		if err != nil {
 			return protoreflect.Value{}, err
 		}
-		val := zigzagDecode(zigzag)
+		val := ZigzagDecode(zigzag)
 		return protoreflect.ValueOfInt64(val), nil
 
 	case protoreflect.Fixed32Kind:

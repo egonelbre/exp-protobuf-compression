@@ -28,6 +28,26 @@ func NewModelBuilder() *ModelBuilder {
 	}
 }
 
+// BoolModel returns the boolean model.
+func (mb *ModelBuilder) BoolModel() arithcode.Model {
+	return mb.boolModel
+}
+
+// ByteModel returns the byte model.
+func (mb *ModelBuilder) ByteModel() arithcode.Model {
+	return mb.byteModel
+}
+
+// VarintModel returns the varint model.
+func (mb *ModelBuilder) VarintModel() arithcode.Model {
+	return mb.varintModel
+}
+
+// EnglishModel returns the English text model.
+func (mb *ModelBuilder) EnglishModel() *arithcode.EnglishModel {
+	return mb.englishModel
+}
+
 // createVarintModel creates a model optimized for variable-length integers.
 // Small integers are more common in practice, so we give them higher probability.
 func createVarintModel() arithcode.Model {
@@ -110,9 +130,9 @@ func (mb *ModelBuilder) GetFieldModel(fd protoreflect.FieldDescriptor) arithcode
 	}
 }
 
-// encodeVarint encodes an integer as a variable-length quantity.
+// EncodeVarint encodes an integer as a variable-length quantity.
 // Returns the bytes to encode with the varint model.
-func encodeVarint(value uint64) []byte {
+func EncodeVarint(value uint64) []byte {
 	var buf []byte
 	for {
 		b := byte(value & 0x7F)
@@ -128,8 +148,8 @@ func encodeVarint(value uint64) []byte {
 	return buf
 }
 
-// decodeVarint decodes a variable-length quantity.
-func decodeVarint(bytes []byte) uint64 {
+// DecodeVarint decodes a variable-length quantity.
+func DecodeVarint(bytes []byte) uint64 {
 	var value uint64
 	for i, b := range bytes {
 		value |= uint64(b&0x7F) << (7 * i)
@@ -140,13 +160,13 @@ func decodeVarint(bytes []byte) uint64 {
 	return value
 }
 
-// zigzagEncode encodes a signed integer using zigzag encoding.
+// ZigzagEncode encodes a signed integer using zigzag encoding.
 // This maps negative values to positive values: 0, -1, 1, -2, 2, ...
-func zigzagEncode(n int64) uint64 {
+func ZigzagEncode(n int64) uint64 {
 	return uint64((n << 1) ^ (n >> 63))
 }
 
-// zigzagDecode decodes a zigzag-encoded integer.
-func zigzagDecode(n uint64) int64 {
+// ZigzagDecode decodes a zigzag-encoded integer.
+func ZigzagDecode(n uint64) int64 {
 	return int64((n >> 1) ^ -(n & 1))
 }
