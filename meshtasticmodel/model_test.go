@@ -284,6 +284,14 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 			}
 			compressedSizeV8 := bufV8.Len()
 
+			// Compress using V9 (order-1 string models)
+			var bufV9 bytes.Buffer
+			err = CompressV9(tt.msg, &bufV9)
+			if err != nil {
+				t.Fatalf("CompressV9 failed: %v", err)
+			}
+			compressedSizeV9 := bufV9.Len()
+
 			// Calculate ratios
 			ratioV1 := float64(compressedSizeV1) / float64(originalSize) * 100
 			ratioV2 := float64(compressedSizeV2) / float64(originalSize) * 100
@@ -293,6 +301,7 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 			ratioV6 := float64(compressedSizeV6) / float64(originalSize) * 100
 			ratioV7 := float64(compressedSizeV7) / float64(originalSize) * 100
 			ratioV8 := float64(compressedSizeV8) / float64(originalSize) * 100
+			ratioV9 := float64(compressedSizeV9) / float64(originalSize) * 100
 
 			t.Logf("Original: %d bytes", originalSize)
 			t.Logf("V1 (presence bits): %d bytes, Ratio: %.2f%%", compressedSizeV1, ratioV1)
@@ -303,6 +312,7 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 			t.Logf("V6 (bit-packed bools): %d bytes, Ratio: %.2f%%", compressedSizeV6, ratioV6)
 			t.Logf("V7 (boolean models): %d bytes, Ratio: %.2f%%", compressedSizeV7, ratioV7)
 			t.Logf("V8 (varint models): %d bytes, Ratio: %.2f%%", compressedSizeV8, ratioV8)
+			t.Logf("V9 (order-1 strings): %d bytes, Ratio: %.2f%%", compressedSizeV9, ratioV9)
 
 			bestSize := compressedSizeV1
 			bestVersion := "V1"
@@ -335,11 +345,15 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 				bestSize = compressedSizeV8
 				bestVersion = "V8"
 			}
+			if compressedSizeV9 < bestSize {
+				bestSize = compressedSizeV9
+				bestVersion = "V9"
+			}
 
 			t.Logf("Best: %d bytes (%s saves %d bytes vs V1)", bestSize, bestVersion, compressedSizeV1-bestSize)
 
-			if ratioV8 > tt.maxCompressionPct {
-				t.Errorf("Compression ratio %.2f%% exceeds maximum %.2f%%", ratioV8, tt.maxCompressionPct)
+			if ratioV9 > tt.maxCompressionPct {
+				t.Errorf("Compression ratio %.2f%% exceeds maximum %.2f%%", ratioV9, tt.maxCompressionPct)
 			}
 
 			// Verify V1 roundtrip
@@ -428,6 +442,17 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 
 			if !proto.Equal(tt.msg, resultV8) {
 				t.Error("V8 roundtrip verification failed")
+			}
+
+			// Verify V9 roundtrip
+			resultV9 := tt.msg.ProtoReflect().New().Interface()
+			err = DecompressV9(&bufV9, resultV9)
+			if err != nil {
+				t.Fatalf("DecompressV9 failed: %v", err)
+			}
+
+			if !proto.Equal(tt.msg, resultV9) {
+				t.Error("V9 roundtrip verification failed")
 			}
 		})
 	}
