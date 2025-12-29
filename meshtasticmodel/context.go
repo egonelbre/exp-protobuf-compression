@@ -65,16 +65,17 @@ func (mcb *ContextualModelBuilder) createContextSpecificModel(fieldPath string, 
 	}
 
 	// Altitude models (typically -500 to 9000 meters)
-	if fieldName == "altitude" || fieldName == "altitude_hae" {
+	if fieldName == "altitude" || fieldName == "altitude_hae" || fieldName == "altitude_geoidal_separation" {
 		return createAltitudeModel()
 	}
 
 	// Node ID models (large 32-bit integers)
-	if fieldName == "from" || fieldName == "to" || fieldName == "num" || fieldName == "dest" || fieldName == "source" {
+	if fieldName == "from" || fieldName == "to" || fieldName == "num" || fieldName == "dest" || fieldName == "source" ||
+		fieldName == "node_num" || fieldName == "locked_to" {
 		return createNodeIDModel()
 	}
 
-	// Battery level (0-100%)
+	// Battery level (0-100%, >100 means powered)
 	if fieldName == "battery_level" {
 		return createBatteryLevelModel()
 	}
@@ -89,29 +90,51 @@ func (mcb *ContextualModelBuilder) createContextSpecificModel(fieldPath string, 
 		return createSNRModel()
 	}
 
-	// Voltage (2.0 to 5.0V)
+	// SNR arrays in routing (int32 array, scaled by 4)
+	if fieldName == "snr_towards" || fieldName == "snr_back" {
+		return createSNRArrayModel()
+	}
+
+	// Voltage (2.0 to 5.0V for battery, wider for power monitoring)
 	if fieldName == "voltage" {
 		return createVoltageModel()
 	}
 
-	// Channel utilization (0-100%)
+	// Multi-channel voltage measurements (ch1_voltage through ch8_voltage)
+	if fieldName == "ch1_voltage" || fieldName == "ch2_voltage" || fieldName == "ch3_voltage" || fieldName == "ch4_voltage" ||
+		fieldName == "ch5_voltage" || fieldName == "ch6_voltage" || fieldName == "ch7_voltage" || fieldName == "ch8_voltage" {
+		return createChannelVoltageModel()
+	}
+
+	// Multi-channel current measurements (ch1_current through ch8_current)
+	if fieldName == "ch1_current" || fieldName == "ch2_current" || fieldName == "ch3_current" || fieldName == "ch4_current" ||
+		fieldName == "ch5_current" || fieldName == "ch6_current" || fieldName == "ch7_current" || fieldName == "ch8_current" {
+		return createChannelCurrentModel()
+	}
+
+	// Channel utilization (0-1.0, percentage)
 	if fieldName == "channel_utilization" || fieldName == "air_util_tx" {
 		return createUtilizationModel()
 	}
 
 	// Hop limit (typically 0-7)
-	if fieldName == "hop_limit" || fieldName == "hops_away" {
+	if fieldName == "hop_limit" || fieldName == "hops_away" || fieldName == "hop_start" {
 		return createHopCountModel()
 	}
 
-	// Channel number (typically 0-7)
-	if fieldName == "channel" {
+	// Channel number/index (typically 0-7)
+	if fieldName == "channel" || fieldName == "channel_index" {
 		return createChannelNumberModel()
 	}
 
 	// Satellite count (0-20 typically)
 	if fieldName == "sats_in_view" {
 		return createSatelliteCountModel()
+	}
+
+	// GPS quality indicators
+	if fieldName == "fix_quality" || fieldName == "fix_type" {
+		return createGPSQualityModel()
 	}
 
 	// Precision/accuracy values (typically small positive integers)
@@ -124,13 +147,18 @@ func (mcb *ContextualModelBuilder) createContextSpecificModel(fieldPath string, 
 		return createDOPModel()
 	}
 
-	// Speed values (0-200 km/h typically)
+	// Speed values (0-50 m/s typically)
 	if fieldName == "ground_speed" {
 		return createSpeedModel()
 	}
 
-	// Request ID (small sequential numbers)
-	if fieldName == "request_id" {
+	// Direction/heading values (0-35999, representing 0-359.99 degrees)
+	if fieldName == "ground_track" || fieldName == "wind_direction" {
+		return createDirectionModel()
+	}
+
+	// Request/Reply IDs (small sequential numbers)
+	if fieldName == "request_id" || fieldName == "reply_id" {
 		return createRequestIDModel()
 	}
 
@@ -139,13 +167,19 @@ func (mcb *ContextualModelBuilder) createContextSpecificModel(fieldPath string, 
 		return createPacketIDModel()
 	}
 
+	// Uptime in seconds (monotonically increasing)
+	if fieldName == "uptime_seconds" {
+		return createUptimeModel()
+	}
+
 	// Temperature (-40 to 85°C typical sensor range)
-	if fieldName == "temperature" {
+	if fieldName == "temperature" || fieldName == "co2_temperature" || fieldName == "form_temperature" ||
+		fieldName == "soil_temperature" {
 		return createTemperatureModel()
 	}
 
 	// Humidity (0-100%)
-	if fieldName == "relative_humidity" {
+	if fieldName == "relative_humidity" || fieldName == "co2_humidity" || fieldName == "form_humidity" {
 		return createHumidityModel()
 	}
 
@@ -154,9 +188,127 @@ func (mcb *ContextualModelBuilder) createContextSpecificModel(fieldPath string, 
 		return createPressureModel()
 	}
 
+	// Gas resistance (BME680, typically 0-10000 kOhm)
+	if fieldName == "gas_resistance" {
+		return createGasResistanceModel()
+	}
+
 	// IAQ (Indoor Air Quality, 0-500)
 	if fieldName == "iaq" {
 		return createIAQModel()
+	}
+
+	// Light measurements (lux values, wide range)
+	if fieldName == "lux" || fieldName == "white_lux" || fieldName == "ir_lux" || fieldName == "uv_lux" {
+		return createLuxModel()
+	}
+
+	// Distance measurements (mm from radar sensor)
+	if fieldName == "distance" {
+		return createDistanceModel()
+	}
+
+	// Wind speed (m/s, typically 0-50)
+	if fieldName == "wind_speed" || fieldName == "wind_gust" || fieldName == "wind_lull" {
+		return createWindSpeedModel()
+	}
+
+	// Rainfall (mm, typically 0-100)
+	if fieldName == "rainfall_1h" || fieldName == "rainfall_24h" {
+		return createRainfallModel()
+	}
+
+	// Soil moisture (1-100%)
+	if fieldName == "soil_moisture" {
+		return createSoilMoistureModel()
+	}
+
+	// Particulate matter (ug/m3, 0-500 typical)
+	if fieldName == "pm10_standard" || fieldName == "pm25_standard" || fieldName == "pm100_standard" ||
+		fieldName == "pm10_environmental" || fieldName == "pm25_environmental" || fieldName == "pm100_environmental" {
+		return createParticulateModel()
+	}
+
+	// Particle counts (#/0.1l, wide range)
+	if fieldName == "particles_03um" || fieldName == "particles_05um" || fieldName == "particles_10um" ||
+		fieldName == "particles_25um" || fieldName == "particles_50um" || fieldName == "particles_100um" {
+		return createParticleCountModel()
+	}
+
+	// CO2 (ppm, 400-5000 typical)
+	if fieldName == "co2" {
+		return createCO2Model()
+	}
+
+	// Formaldehyde (mg/m3, 0-1.0 typical)
+	if fieldName == "form_formaldehyde" {
+		return createFormaldehydeModel()
+	}
+
+	// VOC/NOx indices (0-500)
+	if fieldName == "pm_voc_idx" || fieldName == "pm_nox_idx" {
+		return createVOCNOxModel()
+	}
+
+	// Health metrics: heart rate (40-200 bpm)
+	if fieldName == "heart_bpm" {
+		return createHeartRateModel()
+	}
+
+	// Health metrics: blood oxygen (95-100%)
+	if fieldName == "spO2" {
+		return createSpO2Model()
+	}
+
+	// Packet statistics (monotonically increasing counters)
+	if fieldName == "num_packets_tx" || fieldName == "num_packets_rx" || fieldName == "num_packets_rx_bad" ||
+		fieldName == "num_rx_dupe" || fieldName == "num_tx_relay" || fieldName == "num_tx_relay_canceled" {
+		return createPacketCountModel()
+	}
+
+	// Node counts (small values, typically 0-100)
+	if fieldName == "num_online_nodes" || fieldName == "num_total_nodes" {
+		return createNodeCountModel()
+	}
+
+	// Memory metrics (bytes, varying sizes)
+	if fieldName == "heap_total_bytes" || fieldName == "heap_free_bytes" {
+		return createMemoryBytesModel()
+	}
+
+	// Host system memory/disk (large byte counts)
+	if fieldName == "freemem_bytes" || fieldName == "diskfree1_bytes" || fieldName == "diskfree2_bytes" || fieldName == "diskfree3_bytes" {
+		return createLargeMemoryModel()
+	}
+
+	// System load (1/100ths, typically 0-1000)
+	if fieldName == "load1" || fieldName == "load5" || fieldName == "load15" {
+		return createLoadAverageModel()
+	}
+
+	// Timestamps (epoch seconds, monotonically increasing)
+	if fieldName == "time" || fieldName == "timestamp" || fieldName == "rx_time" || fieldName == "tx_after" {
+		return createTimestampModel()
+	}
+
+	// Timestamp millisecond adjustments (-999 to 999)
+	if fieldName == "timestamp_millis_adjust" {
+		return createMillisAdjustModel()
+	}
+
+	// Priority levels (discrete values 0-127)
+	if fieldName == "priority" {
+		return createPriorityModel()
+	}
+
+	// Waypoint/message IDs (sequential, small values)
+	if fieldName == "waypoint_id" || fieldName == "emoji" {
+		return createWaypointIDModel()
+	}
+
+	// Expire time (epoch seconds in future)
+	if fieldName == "expire" {
+		return createExpireTimeModel()
 	}
 
 	return nil
@@ -629,4 +781,381 @@ func (mcb *ContextualModelBuilder) GetVarintByteModel(byteIndex int) arithcode.M
 		return mcb.varintFirstByteModel
 	}
 	return mcb.varintContByteModel
+}
+
+// New model creation functions for expanded Meshtastic field support
+
+// createSNRArrayModel creates a model for SNR arrays in routing messages.
+// Values are int32 but typically -20 to +20 dB, scaled by 4.
+func createSNRArrayModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// SNR values -20 to +20 dB, scaled by 4 = -80 to +80
+	// After zigzag encoding and varint
+	for i := 0; i < 256; i++ {
+		freqs[i] = 40
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createChannelVoltageModel creates a model for power monitoring channel voltages.
+// Wider range than battery voltage (0-50V typical).
+func createChannelVoltageModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	for i := 0; i < 256; i++ {
+		freqs[i] = 40
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createChannelCurrentModel creates a model for power monitoring channel currents.
+// Typically 0-10A, stored as float32.
+func createChannelCurrentModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	for i := 0; i < 256; i++ {
+		freqs[i] = 40
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createGPSQualityModel creates a model for GPS fix quality/type indicators.
+// Small discrete values (0-9 typical).
+func createGPSQualityModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	for i := 0; i <= 9; i++ {
+		// Quality 1-3 most common (no fix, 2D, 3D)
+		if i >= 1 && i <= 3 {
+			freqs[i] = 150
+		} else {
+			freqs[i] = 30
+		}
+	}
+	for i := 10; i < 256; i++ {
+		freqs[i] = 1
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createDirectionModel creates a model for direction/heading (0-35999 for 0-359.99 degrees).
+func createDirectionModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// Direction values spread across range, relatively uniform
+	for i := 0; i < 256; i++ {
+		freqs[i] = 40
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createUptimeModel creates a model for uptime_seconds (monotonically increasing).
+func createUptimeModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// Uptime can be very large, but changes slowly
+	for i := 0; i < 256; i++ {
+		freqs[i] = 40
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createGasResistanceModel creates a model for gas resistance (0-10000 kOhm).
+func createGasResistanceModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// Gas resistance varies widely, float32
+	for i := 0; i < 256; i++ {
+		freqs[i] = 40
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createLuxModel creates a model for light measurements (wide range, 0-100000+ lux).
+func createLuxModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// Lux values vary widely (indoor vs outdoor)
+	for i := 0; i < 256; i++ {
+		freqs[i] = 40
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createDistanceModel creates a model for distance measurements (mm, 0-10000 typical).
+func createDistanceModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// Distance in mm, float32, moderate range
+	for i := 0; i < 256; i++ {
+		freqs[i] = 40
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createWindSpeedModel creates a model for wind speed (m/s, 0-50 typical).
+func createWindSpeedModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// Wind speed as float32, typically low values
+	for i := 0; i < 256; i++ {
+		freqs[i] = 40
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createRainfallModel creates a model for rainfall (mm, 0-100 typical).
+func createRainfallModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// Rainfall as float32, usually small values
+	for i := 0; i < 256; i++ {
+		freqs[i] = 40
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createSoilMoistureModel creates a model for soil moisture (1-100%).
+func createSoilMoistureModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// Soil moisture 1-100, favor mid-range (healthy soil)
+	for i := 1; i <= 100; i++ {
+		if i >= 20 && i <= 80 {
+			freqs[i] = 80
+		} else {
+			freqs[i] = 30
+		}
+	}
+	for i := 101; i < 256; i++ {
+		freqs[i] = 1
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createParticulateModel creates a model for PM values (ug/m3, 0-500 typical).
+func createParticulateModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// PM values usually low (good air quality), favor 0-100
+	for i := 0; i <= 100; i++ {
+		freqs[i] = 100 - uint64(i/2)
+		if freqs[i] < 20 {
+			freqs[i] = 20
+		}
+	}
+	for i := 101; i < 256; i++ {
+		freqs[i] = 15
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createParticleCountModel creates a model for particle counts (#/0.1l).
+func createParticleCountModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// Particle counts vary widely, stored as uint32
+	for i := 0; i < 256; i++ {
+		freqs[i] = 40
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createCO2Model creates a model for CO2 (ppm, 400-5000 typical).
+func createCO2Model() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// CO2 typically 400-2000 ppm, favor lower (outdoor/ventilated)
+	// As uint32, values fit in 2 varint bytes
+	for i := 0; i < 128; i++ {
+		freqs[i] = 80 - uint64(i/3)
+		if freqs[i] < 15 {
+			freqs[i] = 15
+		}
+	}
+	for i := 128; i < 256; i++ {
+		freqs[i] = 20
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createFormaldehydeModel creates a model for formaldehyde (mg/m3, 0-1.0 typical).
+func createFormaldehydeModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// Formaldehyde as float32, low values
+	for i := 0; i < 256; i++ {
+		freqs[i] = 40
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createVOCNOxModel creates a model for VOC/NOx indices (0-500).
+func createVOCNOxModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// VOC/NOx indices as float32, favor lower values (good air)
+	for i := 0; i < 256; i++ {
+		freqs[i] = 40
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createHeartRateModel creates a model for heart rate (40-200 bpm).
+func createHeartRateModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// Heart rate 40-200, favor normal range 60-100
+	for i := 40; i <= 200; i++ {
+		if i >= 60 && i <= 100 {
+			freqs[i] = 100
+		} else {
+			freqs[i] = 30
+		}
+	}
+	for i := 0; i < 40; i++ {
+		freqs[i] = 1
+	}
+	for i := 201; i < 256; i++ {
+		freqs[i] = 1
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createSpO2Model creates a model for blood oxygen saturation (95-100%).
+func createSpO2Model() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// SpO2 typically 95-100%, heavily favor 98-100%
+	for i := 95; i <= 100; i++ {
+		if i >= 98 {
+			freqs[i] = 200
+		} else {
+			freqs[i] = 50
+		}
+	}
+	for i := 0; i < 95; i++ {
+		freqs[i] = 10
+	}
+	for i := 101; i < 256; i++ {
+		freqs[i] = 1
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createPacketCountModel creates a model for packet counters (monotonically increasing).
+func createPacketCountModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// Packet counts increase over time, stored as uint32
+	for i := 0; i < 256; i++ {
+		freqs[i] = 40
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createNodeCountModel creates a model for node counts (0-100 typical).
+func createNodeCountModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// Node counts typically small (0-50)
+	for i := 0; i <= 100; i++ {
+		freqs[i] = 100 - uint64(i)
+		if freqs[i] < 10 {
+			freqs[i] = 10
+		}
+	}
+	for i := 101; i < 256; i++ {
+		freqs[i] = 5
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createMemoryBytesModel creates a model for heap memory (bytes, KB to MB range).
+func createMemoryBytesModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// Memory sizes vary, stored as uint32
+	for i := 0; i < 256; i++ {
+		freqs[i] = 40
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createLargeMemoryModel creates a model for large memory/disk (GB range).
+func createLargeMemoryModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// Large memory as uint64, wide range
+	for i := 0; i < 256; i++ {
+		freqs[i] = 40
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createLoadAverageModel creates a model for system load (1/100ths, 0-1000 typical).
+func createLoadAverageModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// Load average usually low (0-400 = 0-4.0)
+	for i := 0; i < 128; i++ {
+		freqs[i] = 80 - uint64(i/2)
+		if freqs[i] < 15 {
+			freqs[i] = 15
+		}
+	}
+	for i := 128; i < 256; i++ {
+		freqs[i] = 20
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createTimestampModel creates a model for timestamps (epoch seconds).
+func createTimestampModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// Timestamps are large but change slowly, good for delta encoding
+	for i := 0; i < 256; i++ {
+		freqs[i] = 40
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createMillisAdjustModel creates a model for millisecond adjustments (-999 to 999).
+func createMillisAdjustModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// Millis adjust as int32 zigzag, small range
+	// Most values will be 0 or very small
+	for i := 0; i < 50; i++ {
+		freqs[i] = 100 - uint64(i)
+		if freqs[i] < 20 {
+			freqs[i] = 20
+		}
+	}
+	for i := 50; i < 256; i++ {
+		freqs[i] = 15
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createPriorityModel creates a model for priority levels (discrete 0-127).
+func createPriorityModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// Priority values: common ones are 10 (BACKGROUND), 64 (DEFAULT), 70 (RELIABLE), 120 (ACK)
+	priorityValues := map[int]uint64{
+		0: 50, 1: 30, 10: 150, 64: 200, 70: 150, 80: 100, 100: 80, 110: 60, 120: 120, 127: 40,
+	}
+	for i := 0; i < 128; i++ {
+		if freq, ok := priorityValues[i]; ok {
+			freqs[i] = freq
+		} else {
+			freqs[i] = 10
+		}
+	}
+	for i := 128; i < 256; i++ {
+		freqs[i] = 1
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createWaypointIDModel creates a model for waypoint/message IDs (sequential, small).
+func createWaypointIDModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// Small sequential IDs
+	for i := 0; i < 128; i++ {
+		freqs[i] = 80 - uint64(i/2)
+		if freqs[i] < 15 {
+			freqs[i] = 15
+		}
+	}
+	for i := 128; i < 256; i++ {
+		freqs[i] = 20
+	}
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createExpireTimeModel creates a model for expire timestamps (future epoch seconds).
+func createExpireTimeModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+	// Expire times are timestamps in the future
+	for i := 0; i < 256; i++ {
+		freqs[i] = 40
+	}
+	return arithcode.NewFrequencyTable(freqs)
 }
