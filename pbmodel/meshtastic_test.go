@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/egonelbre/exp-protobuf-compression/pbmodel/testdata/meshtastic"
+	"github.com/egonelbre/exp-protobuf-compression/meshtastic"
 	"google.golang.org/protobuf/proto"
 )
 
