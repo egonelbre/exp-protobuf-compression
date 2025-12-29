@@ -41,6 +41,27 @@ var Versions = []Version{
 		Decompress:  pbmodel.DecompressOrder2,
 	},
 	{
+		Name:        "pbmodel-varint",
+		Short:       "baseline+varint models",
+		Description: "Generic protobuf compression with position-specific varint byte models",
+		Compress:    pbmodel.CompressVarintModels,
+		Decompress:  pbmodel.DecompressVarintModels,
+	},
+	{
+		Name:        "pbmodel-varint-o1",
+		Short:       "varint+order-1",
+		Description: "Varint byte models combined with order-1 string compression",
+		Compress:    pbmodel.CompressVarintModelsOrder1,
+		Decompress:  pbmodel.DecompressVarintModelsOrder1,
+	},
+	{
+		Name:        "pbmodel-varint-o2",
+		Short:       "varint+order-2",
+		Description: "Varint byte models combined with order-2 string compression",
+		Compress:    pbmodel.CompressVarintModelsOrder2,
+		Decompress:  pbmodel.DecompressVarintModelsOrder2,
+	},
+	{
 		Name:        "V1",
 		Short:       "presence bits",
 		Description: "Meshtastic-specific optimizations: text payload detection, coordinate delta encoding, optimized field models",
