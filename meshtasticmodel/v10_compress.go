@@ -102,12 +102,6 @@ func compressMessageV10(fieldPath string, msg protoreflect.Message, enc *arithco
 
 // compressRepeatedFieldV10 compresses repeated fields.
 func compressRepeatedFieldV10(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, enc *arithcode.Encoder, mcb *ContextualModelBuilder) error {
-	lengthPath := fieldPath + "._length"
-	lengthModel := mcb.GetContextualFieldModel(lengthPath, fd)
-	if lengthModel == nil {
-		lengthModel = mcb.ByteModel()
-	}
-
 	length := list.Len()
 	if err := encodeVarintWithModels(uint64(length), enc, mcb); err != nil {
 		return fmt.Errorf("length: %w", err)
@@ -133,12 +127,6 @@ func compressRepeatedFieldV10(fieldPath string, fd protoreflect.FieldDescriptor,
 
 // compressMapFieldV10 compresses map fields.
 func compressMapFieldV10(fieldPath string, fd protoreflect.FieldDescriptor, mapVal protoreflect.Map, enc *arithcode.Encoder, mcb *ContextualModelBuilder) error {
-	lengthPath := fieldPath + "._length"
-	lengthModel := mcb.GetContextualFieldModel(lengthPath, fd)
-	if lengthModel == nil {
-		lengthModel = mcb.ByteModel()
-	}
-
 	length := mapVal.Len()
 	if err := encodeVarintWithModels(uint64(length), enc, mcb); err != nil {
 		return fmt.Errorf("map length: %w", err)

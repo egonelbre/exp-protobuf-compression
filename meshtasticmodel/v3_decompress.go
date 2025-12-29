@@ -98,7 +98,6 @@ func decompressMessageDelta(fieldPath string, msg protoreflect.Message, dec *ari
 
 	// Decode fields with deltas
 	lastFieldNum := 0
-	var presentFields []protoreflect.FieldDescriptor
 
 	for i := 0; i < int(numPresent); i++ {
 		// Decode delta
@@ -116,7 +115,6 @@ func decompressMessageDelta(fieldPath string, msg protoreflect.Message, dec *ari
 			return fmt.Errorf("unknown field number: %d", currentFieldNum)
 		}
 
-		presentFields = append(presentFields, fd)
 		currentPath := pbmodel.BuildFieldPath(fieldPath, string(fd.Name()))
 
 		// Track portnum

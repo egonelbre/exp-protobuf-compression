@@ -118,12 +118,6 @@ func decompressMessageV8(fieldPath string, msg protoreflect.Message, dec *arithc
 
 // decompressRepeatedFieldV8 decompresses a repeated field.
 func decompressRepeatedFieldV8(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, dec *arithcode.Decoder, mcb *ContextualModelBuilder) error {
-	lengthPath := fieldPath + "._length"
-	lengthModel := mcb.GetContextualFieldModel(lengthPath, fd)
-	if lengthModel == nil {
-		lengthModel = mcb.ByteModel()
-	}
-
 	lengthVal, err := decodeVarintWithModels(dec, mcb)
 	if err != nil {
 		return fmt.Errorf("length: %w", err)
@@ -153,12 +147,6 @@ func decompressRepeatedFieldV8(fieldPath string, fd protoreflect.FieldDescriptor
 
 // decompressMapFieldV8 decompresses a map field.
 func decompressMapFieldV8(fieldPath string, fd protoreflect.FieldDescriptor, mapVal protoreflect.Map, dec *arithcode.Decoder, mcb *ContextualModelBuilder) error {
-	lengthPath := fieldPath + "._length"
-	lengthModel := mcb.GetContextualFieldModel(lengthPath, fd)
-	if lengthModel == nil {
-		lengthModel = mcb.ByteModel()
-	}
-
 	lengthVal, err := decodeVarintWithModels(dec, mcb)
 	if err != nil {
 		return fmt.Errorf("map length: %w", err)
