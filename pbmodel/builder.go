@@ -3,7 +3,7 @@
 package pbmodel
 
 import (
-	"github.com/egonelbre/protobuf-compression/arithcode"
+	"github.com/egonelbre/exp-protobuf-compression/arithcode"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 

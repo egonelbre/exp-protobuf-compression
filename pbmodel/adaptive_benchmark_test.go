@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/egonelbre/protobuf-compression/pbmodel/testdata"
+	"github.com/egonelbre/exp-protobuf-compression/pbmodel/testdata"
 )
 
 func repeatText(text string, targetSize int) string {

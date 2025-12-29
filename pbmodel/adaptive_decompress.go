@@ -7,7 +7,7 @@ import (
 	"io"
 	"math"
 
-	"github.com/egonelbre/protobuf-compression/arithcode"
+	"github.com/egonelbre/exp-protobuf-compression/arithcode"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/dynamicpb"

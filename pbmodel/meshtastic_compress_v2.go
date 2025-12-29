@@ -8,8 +8,8 @@ import (
 	"math"
 	"unicode/utf8"
 
-	"github.com/egonelbre/protobuf-compression/arithcode"
-	"github.com/egonelbre/protobuf-compression/pbmodel/testdata/meshtastic"
+	"github.com/egonelbre/exp-protobuf-compression/arithcode"
+	"github.com/egonelbre/exp-protobuf-compression/pbmodel/testdata/meshtastic"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )

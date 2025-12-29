@@ -1,4 +1,4 @@
-module github.com/egonelbre/protobuf-compression
+module github.com/egonelbre/exp-protobuf-compression
 
 go 1.25
 

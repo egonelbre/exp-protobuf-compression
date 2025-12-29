@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/egonelbre/protobuf-compression/pbmodel/testdata"
+	"github.com/egonelbre/exp-protobuf-compression/pbmodel/testdata"
 	"google.golang.org/protobuf/proto"
 )
 
