@@ -7,7 +7,6 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/egonelbre/exp-protobuf-compression/meshtastic"
-	"github.com/egonelbre/exp-protobuf-compression/pbmodel"
 )
 
 // TestMeshtasticPosition tests compression of Meshtastic Position messages
@@ -172,28 +171,34 @@ func TestMeshtasticMeshPacket(t *testing.T) {
 func testMeshtasticRoundtrip(t *testing.T, name string, msg proto.Message) {
 	t.Helper()
 
-	// Compress
-	var buf bytes.Buffer
-	err := pbmodel.Compress(msg, &buf)
-	if err != nil {
-		t.Fatalf("%s: Compress failed: %v", name, err)
-	}
-
-	// Get compression stats
 	originalData, _ := proto.Marshal(msg)
-	ratio := float64(buf.Len()) / float64(len(originalData)) * 100
-	t.Logf("%s: Original %d bytes -> Compressed %d bytes (%.1f%%)",
-		name, len(originalData), buf.Len(), ratio)
 
-	// Decompress
-	result := msg.ProtoReflect().New().Interface()
-	err = pbmodel.Decompress(&buf, result)
-	if err != nil {
-		t.Fatalf("%s: Decompress failed: %v", name, err)
-	}
+	// Test all versions
+	for _, version := range Versions {
+		t.Run(version.Name, func(t *testing.T) {
+			// Compress
+			var buf bytes.Buffer
+			err := version.Compress(msg, &buf)
+			if err != nil {
+				t.Fatalf("%s/%s: Compress failed: %v", name, version.Name, err)
+			}
 
-	// Compare
-	if !proto.Equal(msg, result) {
-		t.Errorf("%s: Messages differ:\noriginal: %v\nresult:   %v", name, msg, result)
+			// Get compression stats
+			ratio := float64(buf.Len()) / float64(len(originalData)) * 100
+			t.Logf("%s/%s: Original %d bytes -> Compressed %d bytes (%.1f%%)",
+				name, version.Name, len(originalData), buf.Len(), ratio)
+
+			// Decompress
+			result := msg.ProtoReflect().New().Interface()
+			err = version.Decompress(&buf, result)
+			if err != nil {
+				t.Fatalf("%s/%s: Decompress failed: %v", name, version.Name, err)
+			}
+
+			// Compare
+			if !proto.Equal(msg, result) {
+				t.Errorf("%s/%s: Messages differ:\noriginal: %v\nresult:   %v", name, version.Name, msg, result)
+			}
+		})
 	}
 }
