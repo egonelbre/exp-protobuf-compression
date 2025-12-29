@@ -15,6 +15,10 @@ type MeshtasticContextualModelBuilder struct {
 	contextModels   map[string]arithcode.Model
 	enumPredictions map[string]protoreflect.EnumNumber
 	booleanModels   map[string]arithcode.Model // Field-specific boolean models
+
+	// Varint byte models
+	varintFirstByteModel arithcode.Model // Model for first byte of varint
+	varintContByteModel  arithcode.Model // Model for continuation bytes
 }
 
 // NewMeshtasticContextualModelBuilder creates a context-aware model builder.
@@ -24,6 +28,8 @@ func NewMeshtasticContextualModelBuilder() *MeshtasticContextualModelBuilder {
 		contextModels:          make(map[string]arithcode.Model),
 		enumPredictions:        getCommonEnumValues(),
 		booleanModels:          make(map[string]arithcode.Model),
+		varintFirstByteModel:   createVarintFirstByteModel(),
+		varintContByteModel:    createVarintContinuationByteModel(),
 	}
 }
 
@@ -554,4 +560,72 @@ func createBooleanModel(fieldName string) arithcode.Model {
 		// This is better than uniform 50/50 for most boolean fields in protocols
 		return arithcode.NewFrequencyTable([]uint64{600, 400})
 	}
+}
+
+// createVarintFirstByteModel creates a probability model for the first byte of a varint.
+// The first byte is special because:
+// - Bit 7 (0x80) is the continuation bit: 0 = last byte, 1 = more bytes follow
+// - Bits 0-6 contain the value
+// - Small values (0-127) fit in one byte with bit 7 = 0
+// - Larger values need multiple bytes with bit 7 = 1
+func createVarintFirstByteModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+
+	// Bytes 0-127: Terminal bytes (no continuation)
+	// These represent small values that fit in a single byte
+	// Favor smaller values - they're more common in practice
+	for i := 0; i < 128; i++ {
+		// Exponential decay: smaller values are much more common
+		// 0 gets highest frequency, decreasing as value increases
+		freqs[i] = 200 - uint64(i)
+		if freqs[i] < 20 {
+			freqs[i] = 20
+		}
+	}
+
+	// Bytes 128-255: Continuation bytes (more bytes follow)
+	// These represent larger values needing multiple bytes
+	// Less common than single-byte values
+	for i := 128; i < 256; i++ {
+		// Lower bits of first byte when value is large
+		// More uniform distribution within this range
+		freqs[i] = 15
+	}
+
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// createVarintContinuationByteModel creates a probability model for continuation bytes.
+// Continuation bytes appear after the first byte in multi-byte varints.
+// They follow a different pattern than the first byte.
+func createVarintContinuationByteModel() arithcode.Model {
+	freqs := make([]uint64, 256)
+
+	// Bytes 0-127: Last continuation byte (bit 7 = 0)
+	// The continuation ends, these are more common
+	for i := 0; i < 128; i++ {
+		// Relatively uniform for termination bytes
+		// Slightly favor smaller values
+		freqs[i] = 100 - uint64(i/4)
+		if freqs[i] < 30 {
+			freqs[i] = 30
+		}
+	}
+
+	// Bytes 128-255: More continuation bytes follow (bit 7 = 1)
+	// Less common - values rarely need 3+ bytes
+	for i := 128; i < 256; i++ {
+		freqs[i] = 20
+	}
+
+	return arithcode.NewFrequencyTable(freqs)
+}
+
+// GetVarintByteModel returns the appropriate model for a varint byte.
+// byteIndex: 0 for first byte, 1+ for continuation bytes
+func (mcb *MeshtasticContextualModelBuilder) GetVarintByteModel(byteIndex int) arithcode.Model {
+	if byteIndex == 0 {
+		return mcb.varintFirstByteModel
+	}
+	return mcb.varintContByteModel
 }
