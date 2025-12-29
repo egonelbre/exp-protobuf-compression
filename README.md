@@ -1,5 +1,9 @@
 # Arithmetic Coding for Protocol Buffers
 
+This project is an exploration of using AI coding techniques, to implement arithmetic coding compression specifically for Protocol Buffers, and specialize the field models for Meshtastic packets.
+
+This project is not guaranteed to work and is meant as a proof of concept, rather than an actual implementation.
+
 This project implements arithmetic coding compression for Protocol Buffer messages in Go. It provides intelligent compression by building models based on protobuf message structure, with specialized handling for English text in string fields.
 
 ## Features
@@ -271,16 +275,6 @@ go test -bench=. ./...
 - **Model Adaptation**: Models are static; adaptive models could improve compression for specific data patterns
 - **String Language**: English text model is optimized for English; other languages may not compress as well
 - **Error Handling**: Any bit corruption in compressed data will cause decompression failure (as expected with arithmetic coding)
-
-## Future Improvements
-
-Potential enhancements:
-
-- Adaptive models that learn from the data being compressed
-- Context-based modeling for improved string compression
-- Parallel compression of independent message fields
-- Support for streaming compression/decompression
-- Additional language models beyond English
 
 ## License
 
