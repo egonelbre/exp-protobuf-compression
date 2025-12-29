@@ -22,9 +22,23 @@ var Versions = []Version{
 	{
 		Name:        "pbmodel",
 		Short:       "baseline",
-		Description: "Generic protobuf compression baseline",
+		Description: "Generic protobuf compression baseline (order-0 strings)",
 		Compress:    pbmodel.Compress,
 		Decompress:  pbmodel.Decompress,
+	},
+	{
+		Name:        "pbmodel-o1",
+		Short:       "baseline+order-1",
+		Description: "Generic protobuf compression with order-1 string compression",
+		Compress:    pbmodel.CompressOrder1,
+		Decompress:  pbmodel.DecompressOrder1,
+	},
+	{
+		Name:        "pbmodel-o2",
+		Short:       "baseline+order-2",
+		Description: "Generic protobuf compression with order-2 string compression",
+		Compress:    pbmodel.CompressOrder2,
+		Decompress:  pbmodel.DecompressOrder2,
 	},
 	{
 		Name:        "V1",
