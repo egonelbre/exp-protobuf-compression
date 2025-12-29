@@ -97,8 +97,18 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 			}
 			bestResult := results[bestIdx]
 
-			// Find V1 for comparison (skip pbmodel which is index 0)
-			v1Result := results[1] // V1 is second in the list after pbmodel
+			// Find V1 for comparison (first meshtastic-specific version after pbmodel variants)
+			v1Idx := -1
+			for i, r := range results {
+				if r.version.Name == "V1" {
+					v1Idx = i
+					break
+				}
+			}
+			if v1Idx == -1 {
+				t.Fatal("V1 version not found in results")
+			}
+			v1Result := results[v1Idx]
 			t.Logf("Best: %d bytes (%s saves %d bytes vs %s)",
 				bestResult.compressedSize,
 				bestResult.version.Name,
