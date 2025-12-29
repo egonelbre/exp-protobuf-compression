@@ -8,11 +8,12 @@ import (
 	"math"
 	"unicode/utf8"
 
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
+
 	"github.com/egonelbre/exp-protobuf-compression/arithcode"
 	"github.com/egonelbre/exp-protobuf-compression/meshtastic"
 	"github.com/egonelbre/exp-protobuf-compression/pbmodel"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 // CompressV1 compresses a protobuf message with Meshtastic-specific optimizations.

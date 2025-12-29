@@ -7,10 +7,11 @@ import (
 	"io"
 	"math"
 
-	"github.com/egonelbre/exp-protobuf-compression/arithcode"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/dynamicpb"
+
+	"github.com/egonelbre/exp-protobuf-compression/arithcode"
 )
 
 // AdaptiveDecompress decompresses data into a protobuf message using field-specific models.

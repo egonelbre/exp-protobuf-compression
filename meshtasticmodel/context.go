@@ -1,8 +1,9 @@
 package meshtasticmodel
 
 import (
-	"github.com/egonelbre/exp-protobuf-compression/arithcode"
 	"google.golang.org/protobuf/reflect/protoreflect"
+
+	"github.com/egonelbre/exp-protobuf-compression/arithcode"
 )
 
 // ContextualModelBuilder creates highly specialized models based on
@@ -24,12 +25,12 @@ type ContextualModelBuilder struct {
 // NewContextualModelBuilder creates a context-aware model builder.
 func NewContextualModelBuilder() *ContextualModelBuilder {
 	return &ContextualModelBuilder{
-		ModelBuilderV1: NewModelBuilderV1(),
-		contextModels:          make(map[string]arithcode.Model),
-		enumPredictions:        getCommonEnumValues(),
-		booleanModels:          make(map[string]arithcode.Model),
-		varintFirstByteModel:   createVarintFirstByteModel(),
-		varintContByteModel:    createVarintContinuationByteModel(),
+		ModelBuilderV1:       NewModelBuilderV1(),
+		contextModels:        make(map[string]arithcode.Model),
+		enumPredictions:      getCommonEnumValues(),
+		booleanModels:        make(map[string]arithcode.Model),
+		varintFirstByteModel: createVarintFirstByteModel(),
+		varintContByteModel:  createVarintContinuationByteModel(),
 	}
 }
 

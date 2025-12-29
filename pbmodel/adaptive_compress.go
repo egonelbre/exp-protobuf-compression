@@ -7,9 +7,10 @@ import (
 	"io"
 	"math"
 
-	"github.com/egonelbre/exp-protobuf-compression/arithcode"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
+
+	"github.com/egonelbre/exp-protobuf-compression/arithcode"
 )
 
 // AdaptiveCompress compresses a protobuf message using field-specific models.

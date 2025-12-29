@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"testing"
 
+	"google.golang.org/protobuf/proto"
+
 	"github.com/egonelbre/exp-protobuf-compression/meshtastic"
 	"github.com/egonelbre/exp-protobuf-compression/pbmodel"
-	"google.golang.org/protobuf/proto"
 )
 
 // TestMeshtasticPosition tests compression of Meshtastic Position messages

@@ -8,11 +8,12 @@ import (
 	"math"
 	"unicode/utf8"
 
-	"github.com/egonelbre/exp-protobuf-compression/arithcode"
-	"github.com/egonelbre/exp-protobuf-compression/pbmodel"
-	"github.com/egonelbre/exp-protobuf-compression/meshtastic"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
+
+	"github.com/egonelbre/exp-protobuf-compression/arithcode"
+	"github.com/egonelbre/exp-protobuf-compression/meshtastic"
+	"github.com/egonelbre/exp-protobuf-compression/pbmodel"
 )
 
 // CompressV4 adds enum value prediction on top of V1.
@@ -37,8 +38,8 @@ type ModelBuilderV4 struct {
 // NewModelBuilderV4 creates a builder with enum predictions.
 func NewModelBuilderV4() *ModelBuilderV4 {
 	return &ModelBuilderV4{
-		ModelBuilderV1: NewModelBuilderV1(),
-		enumPredictions:        getCommonEnumValues(),
+		ModelBuilderV1:  NewModelBuilderV1(),
+		enumPredictions: getCommonEnumValues(),
 	}
 }
 

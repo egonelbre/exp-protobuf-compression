@@ -6,8 +6,9 @@ import (
 	"testing"
 	"unicode/utf8"
 
-	"github.com/egonelbre/exp-protobuf-compression/pbmodel/testdata"
 	"google.golang.org/protobuf/proto"
+
+	"github.com/egonelbre/exp-protobuf-compression/pbmodel/testdata"
 )
 
 func FuzzSimpleMessage(f *testing.F) {

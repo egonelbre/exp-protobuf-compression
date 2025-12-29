@@ -5,8 +5,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/egonelbre/exp-protobuf-compression/pbmodel/testdata"
 	"google.golang.org/protobuf/proto"
+
+	"github.com/egonelbre/exp-protobuf-compression/pbmodel/testdata"
 )
 
 // TestCompressionRatioStructuredData tests compression effectiveness on protobuf messages.

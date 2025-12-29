@@ -3,8 +3,9 @@
 package pbmodel
 
 import (
-	"github.com/egonelbre/exp-protobuf-compression/arithcode"
 	"google.golang.org/protobuf/reflect/protoreflect"
+
+	"github.com/egonelbre/exp-protobuf-compression/arithcode"
 )
 
 // ModelBuilder creates compression models for protobuf messages.

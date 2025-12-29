@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/egonelbre/exp-protobuf-compression/pbmodel/testdata"
 	"google.golang.org/protobuf/proto"
+
+	"github.com/egonelbre/exp-protobuf-compression/pbmodel/testdata"
 )
 
 func TestSimpleMessageRoundtrip(t *testing.T) {

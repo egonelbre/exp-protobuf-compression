@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/egonelbre/exp-protobuf-compression/arithcode"
-	"github.com/egonelbre/exp-protobuf-compression/pbmodel"
-	"github.com/egonelbre/exp-protobuf-compression/meshtastic"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
+
+	"github.com/egonelbre/exp-protobuf-compression/arithcode"
+	"github.com/egonelbre/exp-protobuf-compression/meshtastic"
+	"github.com/egonelbre/exp-protobuf-compression/pbmodel"
 )
 
 // DecompressV3 decompresses data with hybrid encoding.

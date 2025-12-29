@@ -5,8 +5,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/egonelbre/exp-protobuf-compression/pbmodel/testdata"
 	"google.golang.org/protobuf/proto"
+
+	"github.com/egonelbre/exp-protobuf-compression/pbmodel/testdata"
 )
 
 // BenchmarkCompressMessages benchmarks compression of various message types and sizes.
