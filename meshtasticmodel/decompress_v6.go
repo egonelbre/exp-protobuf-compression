@@ -14,9 +14,9 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-// MeshtasticDecompressV5 decompresses a message using context-aware models.
-func MeshtasticDecompressV5(r io.Reader, msg proto.Message) error {
-	mcb := NewMeshtasticContextualModelBuilder()
+// DecompressV6 decompresses a message using bit-packed booleans.
+func DecompressV6(r io.Reader, msg proto.Message) error {
+	mcb := NewContextualModelBuilder()
 	dec, err := arithcode.NewDecoder(r)
 	if err != nil {
 		return err
@@ -26,11 +26,11 @@ func MeshtasticDecompressV5(r io.Reader, msg proto.Message) error {
 	msgType := string(msg.ProtoReflect().Descriptor().Name())
 	mcb.SetMessageType(msgType)
 
-	return meshtasticDecompressMessageV5("", msg.ProtoReflect(), dec, mcb)
+	return decompressMessageV6("", msg.ProtoReflect(), dec, mcb)
 }
 
-// meshtasticDecompressMessageV5 recursively decompresses with context-aware models.
-func meshtasticDecompressMessageV5(fieldPath string, msg protoreflect.Message, dec *arithcode.Decoder, mcb *MeshtasticContextualModelBuilder) error {
+// decompressMessageV6 recursively decompresses with bit-packed booleans.
+func decompressMessageV6(fieldPath string, msg protoreflect.Message, dec *arithcode.Decoder, mcb *ContextualModelBuilder) error {
 	md := msg.Descriptor()
 	fields := md.Fields()
 
@@ -39,8 +39,30 @@ func meshtasticDecompressMessageV5(fieldPath string, msg protoreflect.Message, d
 	mcb.SetMessageType(string(md.Name()))
 	defer func() { mcb.messageType = prevMsgType }()
 
-	// Iterate through all fields in order
+	// Identify boolean clusters (same logic as compress)
+	boolClusters := identifyBooleanClusters(fields, msg)
+
+	// Track which fields are in boolean clusters
+	inCluster := make(map[int]bool)
+	for _, cluster := range boolClusters {
+		for _, idx := range cluster.fieldIndices {
+			inCluster[idx] = true
+		}
+	}
+
+	// Decode boolean clusters first
+	for _, cluster := range boolClusters {
+		if err := decodeBooleanCluster(cluster, msg, dec, mcb); err != nil {
+			return fmt.Errorf("boolean cluster: %w", err)
+		}
+	}
+
+	// Iterate through all non-boolean-cluster fields
 	for i := 0; i < fields.Len(); i++ {
+		if inCluster[i] {
+			continue // Already handled in cluster
+		}
+
 		fd := fields.Get(i)
 		currentPath := pbmodel.BuildFieldPath(fieldPath, string(fd.Name()))
 
@@ -57,21 +79,21 @@ func meshtasticDecompressMessageV5(fieldPath string, msg protoreflect.Message, d
 
 		if fd.IsList() {
 			list := msg.Mutable(fd).List()
-			if err := meshtasticDecompressRepeatedFieldV5(currentPath, fd, list, dec, mcb); err != nil {
+			if err := decompressRepeatedFieldV6(currentPath, fd, list, dec, mcb); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		} else if fd.IsMap() {
 			m := msg.Mutable(fd).Map()
-			if err := meshtasticDecompressMapFieldV5(currentPath, fd, m, dec, mcb); err != nil {
+			if err := decompressMapFieldV6(currentPath, fd, m, dec, mcb); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		} else if fd.Kind() == protoreflect.MessageKind {
 			nestedMsg := msg.Mutable(fd).Message()
-			if err := meshtasticDecompressMessageV5(currentPath, nestedMsg, dec, mcb); err != nil {
+			if err := decompressMessageV6(currentPath, nestedMsg, dec, mcb); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		} else {
-			value, err := meshtasticDecompressFieldValueV5(currentPath, fd, dec, mcb)
+			value, err := decompressFieldValueV6(currentPath, fd, dec, mcb)
 			if err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
@@ -94,8 +116,36 @@ func meshtasticDecompressMessageV5(fieldPath string, msg protoreflect.Message, d
 	return nil
 }
 
-// meshtasticDecompressRepeatedFieldV5 decompresses repeated fields.
-func meshtasticDecompressRepeatedFieldV5(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, dec *arithcode.Decoder, mcb *MeshtasticContextualModelBuilder) error {
+// decodeBooleanCluster unpacks multiple boolean fields from compact representation.
+func decodeBooleanCluster(cluster BooleanCluster, msg protoreflect.Message, dec *arithcode.Decoder, mcb *ContextualModelBuilder) error {
+	// Decode presence bits
+	presenceBitsSymbol, err := dec.Decode(mcb.ByteModel())
+	if err != nil {
+		return fmt.Errorf("cluster presence bits: %w", err)
+	}
+	presenceBits := uint8(presenceBitsSymbol)
+
+	// Decode value bits
+	valueBitsSymbol, err := dec.Decode(mcb.ByteModel())
+	if err != nil {
+		return fmt.Errorf("cluster value bits: %w", err)
+	}
+	valueBits := uint8(valueBitsSymbol)
+
+	// Set fields based on bits
+	for i, fd := range cluster.fieldDescs {
+		isPresent := (presenceBits & (1 << i)) != 0
+		if isPresent {
+			value := (valueBits & (1 << i)) != 0
+			msg.Set(fd, protoreflect.ValueOfBool(value))
+		}
+	}
+
+	return nil
+}
+
+// decompressRepeatedFieldV6 decompresses repeated fields.
+func decompressRepeatedFieldV6(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, dec *arithcode.Decoder, mcb *ContextualModelBuilder) error {
 	lengthPath := fieldPath + "._length"
 	lengthModel := mcb.GetContextualFieldModel(lengthPath, fd)
 	if lengthModel == nil {
@@ -120,12 +170,12 @@ func meshtasticDecompressRepeatedFieldV5(fieldPath string, fd protoreflect.Field
 	for i := 0; i < length; i++ {
 		if fd.Kind() == protoreflect.MessageKind {
 			nestedMsg := list.NewElement().Message()
-			if err := meshtasticDecompressMessageV5(elementPath, nestedMsg, dec, mcb); err != nil {
+			if err := decompressMessageV6(elementPath, nestedMsg, dec, mcb); err != nil {
 				return fmt.Errorf("list element %d: %w", i, err)
 			}
 			list.Append(protoreflect.ValueOfMessage(nestedMsg))
 		} else {
-			value, err := meshtasticDecompressFieldValueV5(elementPath, fd, dec, mcb)
+			value, err := decompressFieldValueV6(elementPath, fd, dec, mcb)
 			if err != nil {
 				return fmt.Errorf("list element %d: %w", i, err)
 			}
@@ -136,8 +186,8 @@ func meshtasticDecompressRepeatedFieldV5(fieldPath string, fd protoreflect.Field
 	return nil
 }
 
-// meshtasticDecompressMapFieldV5 decompresses map fields.
-func meshtasticDecompressMapFieldV5(fieldPath string, fd protoreflect.FieldDescriptor, m protoreflect.Map, dec *arithcode.Decoder, mcb *MeshtasticContextualModelBuilder) error {
+// decompressMapFieldV6 decompresses map fields.
+func decompressMapFieldV6(fieldPath string, fd protoreflect.FieldDescriptor, m protoreflect.Map, dec *arithcode.Decoder, mcb *ContextualModelBuilder) error {
 	lengthPath := fieldPath + "._length"
 	lengthModel := mcb.GetContextualFieldModel(lengthPath, fd)
 	if lengthModel == nil {
@@ -165,7 +215,7 @@ func meshtasticDecompressMapFieldV5(fieldPath string, fd protoreflect.FieldDescr
 
 	for i := 0; i < length; i++ {
 		// Decode key
-		keyValue, err := meshtasticDecompressFieldValueV5(keyPath, keyFd, dec, mcb)
+		keyValue, err := decompressFieldValueV6(keyPath, keyFd, dec, mcb)
 		if err != nil {
 			return fmt.Errorf("map key: %w", err)
 		}
@@ -174,13 +224,13 @@ func meshtasticDecompressMapFieldV5(fieldPath string, fd protoreflect.FieldDescr
 		var mapValue protoreflect.Value
 		if valueFd.Kind() == protoreflect.MessageKind {
 			nestedMsg := m.NewValue().Message()
-			if err := meshtasticDecompressMessageV5(valuePath, nestedMsg, dec, mcb); err != nil {
+			if err := decompressMessageV6(valuePath, nestedMsg, dec, mcb); err != nil {
 				return fmt.Errorf("map value: %w", err)
 			}
 			mapValue = protoreflect.ValueOfMessage(nestedMsg)
 		} else {
 			var err error
-			mapValue, err = meshtasticDecompressFieldValueV5(valuePath, valueFd, dec, mcb)
+			mapValue, err = decompressFieldValueV6(valuePath, valueFd, dec, mcb)
 			if err != nil {
 				return fmt.Errorf("map value: %w", err)
 			}
@@ -192,8 +242,8 @@ func meshtasticDecompressMapFieldV5(fieldPath string, fd protoreflect.FieldDescr
 	return nil
 }
 
-// meshtasticDecompressFieldValueV5 decompresses a field value.
-func meshtasticDecompressFieldValueV5(fieldPath string, fd protoreflect.FieldDescriptor, dec *arithcode.Decoder, mcb *MeshtasticContextualModelBuilder) (protoreflect.Value, error) {
+// decompressFieldValueV6 decompresses a field value (reuses V5 logic).
+func decompressFieldValueV6(fieldPath string, fd protoreflect.FieldDescriptor, dec *arithcode.Decoder, mcb *ContextualModelBuilder) (protoreflect.Value, error) {
 	// Special handling for Data.payload field
 	if fd.Name() == "payload" && fd.Kind() == protoreflect.BytesKind {
 		// Decode text flag

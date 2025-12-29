@@ -14,9 +14,9 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-// MeshtasticDecompressV8 decompresses a message using varint byte models.
-func MeshtasticDecompressV8(r io.Reader, msg proto.Message) error {
-	mcb := NewMeshtasticContextualModelBuilder()
+// DecompressV8 decompresses a message using varint byte models.
+func DecompressV8(r io.Reader, msg proto.Message) error {
+	mcb := NewContextualModelBuilder()
 	dec, err := arithcode.NewDecoder(r)
 	if err != nil {
 		return err
@@ -25,11 +25,11 @@ func MeshtasticDecompressV8(r io.Reader, msg proto.Message) error {
 	msgType := string(msg.ProtoReflect().Descriptor().Name())
 	mcb.SetMessageType(msgType)
 
-	return meshtasticDecompressMessageV8("", msg.ProtoReflect(), dec, mcb)
+	return decompressMessageV8("", msg.ProtoReflect(), dec, mcb)
 }
 
 // decodeVarintWithModels decodes a varint using position-specific byte models.
-func decodeVarintWithModels(dec *arithcode.Decoder, mcb *MeshtasticContextualModelBuilder) (uint64, error) {
+func decodeVarintWithModels(dec *arithcode.Decoder, mcb *ContextualModelBuilder) (uint64, error) {
 	var varintBytes []byte
 	byteIndex := 0
 	for {
@@ -47,8 +47,8 @@ func decodeVarintWithModels(dec *arithcode.Decoder, mcb *MeshtasticContextualMod
 	return pbmodel.DecodeVarint(varintBytes), nil
 }
 
-// meshtasticDecompressMessageV8 recursively decompresses a message.
-func meshtasticDecompressMessageV8(fieldPath string, msg protoreflect.Message, dec *arithcode.Decoder, mcb *MeshtasticContextualModelBuilder) error {
+// decompressMessageV8 recursively decompresses a message.
+func decompressMessageV8(fieldPath string, msg protoreflect.Message, dec *arithcode.Decoder, mcb *ContextualModelBuilder) error {
 	md := msg.Descriptor()
 	fields := md.Fields()
 
@@ -86,21 +86,21 @@ func meshtasticDecompressMessageV8(fieldPath string, msg protoreflect.Message, d
 
 		if fd.IsList() {
 			list := msg.Mutable(fd).List()
-			if err := meshtasticDecompressRepeatedFieldV8(currentPath, fd, list, dec, mcb); err != nil {
+			if err := decompressRepeatedFieldV8(currentPath, fd, list, dec, mcb); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		} else if fd.IsMap() {
 			mapVal := msg.Mutable(fd).Map()
-			if err := meshtasticDecompressMapFieldV8(currentPath, fd, mapVal, dec, mcb); err != nil {
+			if err := decompressMapFieldV8(currentPath, fd, mapVal, dec, mcb); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		} else if fd.Kind() == protoreflect.MessageKind {
 			subMsg := msg.Mutable(fd).Message()
-			if err := meshtasticDecompressMessageV8(currentPath, subMsg, dec, mcb); err != nil {
+			if err := decompressMessageV8(currentPath, subMsg, dec, mcb); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		} else {
-			value, err := meshtasticDecompressFieldValueV8(currentPath, fd, dec, mcb)
+			value, err := decompressFieldValueV8(currentPath, fd, dec, mcb)
 			if err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
@@ -115,8 +115,8 @@ func meshtasticDecompressMessageV8(fieldPath string, msg protoreflect.Message, d
 	return nil
 }
 
-// meshtasticDecompressRepeatedFieldV8 decompresses a repeated field.
-func meshtasticDecompressRepeatedFieldV8(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, dec *arithcode.Decoder, mcb *MeshtasticContextualModelBuilder) error {
+// decompressRepeatedFieldV8 decompresses a repeated field.
+func decompressRepeatedFieldV8(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, dec *arithcode.Decoder, mcb *ContextualModelBuilder) error {
 	lengthPath := fieldPath + "._length"
 	lengthModel := mcb.GetContextualFieldModel(lengthPath, fd)
 	if lengthModel == nil {
@@ -134,12 +134,12 @@ func meshtasticDecompressRepeatedFieldV8(fieldPath string, fd protoreflect.Field
 
 		if fd.Kind() == protoreflect.MessageKind {
 			elem := list.NewElement()
-			if err := meshtasticDecompressMessageV8(elemPath, elem.Message(), dec, mcb); err != nil {
+			if err := decompressMessageV8(elemPath, elem.Message(), dec, mcb); err != nil {
 				return fmt.Errorf("element %d: %w", i, err)
 			}
 			list.Append(elem)
 		} else {
-			value, err := meshtasticDecompressFieldValueV8(elemPath, fd, dec, mcb)
+			value, err := decompressFieldValueV8(elemPath, fd, dec, mcb)
 			if err != nil {
 				return fmt.Errorf("element %d: %w", i, err)
 			}
@@ -150,8 +150,8 @@ func meshtasticDecompressRepeatedFieldV8(fieldPath string, fd protoreflect.Field
 	return nil
 }
 
-// meshtasticDecompressMapFieldV8 decompresses a map field.
-func meshtasticDecompressMapFieldV8(fieldPath string, fd protoreflect.FieldDescriptor, mapVal protoreflect.Map, dec *arithcode.Decoder, mcb *MeshtasticContextualModelBuilder) error {
+// decompressMapFieldV8 decompresses a map field.
+func decompressMapFieldV8(fieldPath string, fd protoreflect.FieldDescriptor, mapVal protoreflect.Map, dec *arithcode.Decoder, mcb *ContextualModelBuilder) error {
 	lengthPath := fieldPath + "._length"
 	lengthModel := mcb.GetContextualFieldModel(lengthPath, fd)
 	if lengthModel == nil {
@@ -171,7 +171,7 @@ func meshtasticDecompressMapFieldV8(fieldPath string, fd protoreflect.FieldDescr
 		keyPath := fmt.Sprintf("%s._key[%d]", fieldPath, i)
 		valuePath := fmt.Sprintf("%s._value[%d]", fieldPath, i)
 
-		keyValue, err := meshtasticDecompressFieldValueV8(keyPath, keyFd, dec, mcb)
+		keyValue, err := decompressFieldValueV8(keyPath, keyFd, dec, mcb)
 		if err != nil {
 			return fmt.Errorf("map key %d: %w", i, err)
 		}
@@ -179,13 +179,13 @@ func meshtasticDecompressMapFieldV8(fieldPath string, fd protoreflect.FieldDescr
 		var value protoreflect.Value
 		if valueFd.Kind() == protoreflect.MessageKind {
 			valueMsg := mapVal.NewValue()
-			if err := meshtasticDecompressMessageV8(valuePath, valueMsg.Message(), dec, mcb); err != nil {
+			if err := decompressMessageV8(valuePath, valueMsg.Message(), dec, mcb); err != nil {
 				return fmt.Errorf("map value %d: %w", i, err)
 			}
 			value = valueMsg
 		} else {
 			var err error
-			value, err = meshtasticDecompressFieldValueV8(valuePath, valueFd, dec, mcb)
+			value, err = decompressFieldValueV8(valuePath, valueFd, dec, mcb)
 			if err != nil {
 				return fmt.Errorf("map value %d: %w", i, err)
 			}
@@ -197,8 +197,8 @@ func meshtasticDecompressMapFieldV8(fieldPath string, fd protoreflect.FieldDescr
 	return nil
 }
 
-// meshtasticDecompressFieldValueV8 decompresses a single field value.
-func meshtasticDecompressFieldValueV8(fieldPath string, fd protoreflect.FieldDescriptor, dec *arithcode.Decoder, mcb *MeshtasticContextualModelBuilder) (protoreflect.Value, error) {
+// decompressFieldValueV8 decompresses a single field value.
+func decompressFieldValueV8(fieldPath string, fd protoreflect.FieldDescriptor, dec *arithcode.Decoder, mcb *ContextualModelBuilder) (protoreflect.Value, error) {
 	model := mcb.GetContextualFieldModel(fieldPath, fd)
 	if model == nil {
 		model = mcb.GetFieldModel(fieldPath, fd)

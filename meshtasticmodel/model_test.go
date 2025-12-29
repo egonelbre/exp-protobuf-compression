@@ -221,65 +221,65 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 
 			// Compress using V1 (presence bits)
 			var bufV1 bytes.Buffer
-			err = MeshtasticCompress(tt.msg, &bufV1)
+			err = Compress(tt.msg, &bufV1)
 			if err != nil {
-				t.Fatalf("MeshtasticCompress failed: %v", err)
+				t.Fatalf("Compress failed: %v", err)
 			}
 			compressedSizeV1 := bufV1.Len()
 
 			// Compress using V2 (delta-encoded field numbers)
 			var bufV2 bytes.Buffer
-			err = MeshtasticCompressV2(tt.msg, &bufV2)
+			err = CompressV2(tt.msg, &bufV2)
 			if err != nil {
-				t.Fatalf("MeshtasticCompressV2 failed: %v", err)
+				t.Fatalf("CompressV2 failed: %v", err)
 			}
 			compressedSizeV2 := bufV2.Len()
 
 			// Compress using V3 (hybrid encoding)
 			var bufV3 bytes.Buffer
-			err = MeshtasticCompressV3(tt.msg, &bufV3)
+			err = CompressV3(tt.msg, &bufV3)
 			if err != nil {
-				t.Fatalf("MeshtasticCompressV3 failed: %v", err)
+				t.Fatalf("CompressV3 failed: %v", err)
 			}
 			compressedSizeV3 := bufV3.Len()
 
 			// Compress using V4 (enum prediction)
 			var bufV4 bytes.Buffer
-			err = MeshtasticCompressV4(tt.msg, &bufV4)
+			err = CompressV4(tt.msg, &bufV4)
 			if err != nil {
-				t.Fatalf("MeshtasticCompressV4 failed: %v", err)
+				t.Fatalf("CompressV4 failed: %v", err)
 			}
 			compressedSizeV4 := bufV4.Len()
 
 			// Compress using V5 (context-aware models)
 			var bufV5 bytes.Buffer
-			err = MeshtasticCompressV5(tt.msg, &bufV5)
+			err = CompressV5(tt.msg, &bufV5)
 			if err != nil {
-				t.Fatalf("MeshtasticCompressV5 failed: %v", err)
+				t.Fatalf("CompressV5 failed: %v", err)
 			}
 			compressedSizeV5 := bufV5.Len()
 
 			// Compress using V6 (bit-packed booleans)
 			var bufV6 bytes.Buffer
-			err = MeshtasticCompressV6(tt.msg, &bufV6)
+			err = CompressV6(tt.msg, &bufV6)
 			if err != nil {
-				t.Fatalf("MeshtasticCompressV6 failed: %v", err)
+				t.Fatalf("CompressV6 failed: %v", err)
 			}
 			compressedSizeV6 := bufV6.Len()
 
 			// Compress using V7 (field-specific boolean models)
 			var bufV7 bytes.Buffer
-			err = MeshtasticCompressV7(tt.msg, &bufV7)
+			err = CompressV7(tt.msg, &bufV7)
 			if err != nil {
-				t.Fatalf("MeshtasticCompressV7 failed: %v", err)
+				t.Fatalf("CompressV7 failed: %v", err)
 			}
 			compressedSizeV7 := bufV7.Len()
 
 			// Compress using V8 (varint byte models)
 			var bufV8 bytes.Buffer
-			err = MeshtasticCompressV8(tt.msg, &bufV8)
+			err = CompressV8(tt.msg, &bufV8)
 			if err != nil {
-				t.Fatalf("MeshtasticCompressV8 failed: %v", err)
+				t.Fatalf("CompressV8 failed: %v", err)
 			}
 			compressedSizeV8 := bufV8.Len()
 
@@ -343,9 +343,9 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 
 			// Verify V1 roundtrip
 			resultV1 := tt.msg.ProtoReflect().New().Interface()
-			err = MeshtasticDecompress(&bufV1, resultV1)
+			err = Decompress(&bufV1, resultV1)
 			if err != nil {
-				t.Fatalf("MeshtasticDecompress failed: %v", err)
+				t.Fatalf("Decompress failed: %v", err)
 			}
 
 			if !proto.Equal(tt.msg, resultV1) {
@@ -354,9 +354,9 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 
 			// Verify V2 roundtrip
 			resultV2 := tt.msg.ProtoReflect().New().Interface()
-			err = MeshtasticDecompressV2(&bufV2, resultV2)
+			err = DecompressV2(&bufV2, resultV2)
 			if err != nil {
-				t.Fatalf("MeshtasticDecompressV2 failed: %v", err)
+				t.Fatalf("DecompressV2 failed: %v", err)
 			}
 
 			if !proto.Equal(tt.msg, resultV2) {
@@ -365,9 +365,9 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 
 			// Verify V3 roundtrip
 			resultV3 := tt.msg.ProtoReflect().New().Interface()
-			err = MeshtasticDecompressV3(&bufV3, resultV3)
+			err = DecompressV3(&bufV3, resultV3)
 			if err != nil {
-				t.Fatalf("MeshtasticDecompressV3 failed: %v", err)
+				t.Fatalf("DecompressV3 failed: %v", err)
 			}
 
 			if !proto.Equal(tt.msg, resultV3) {
@@ -376,9 +376,9 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 
 			// Verify V4 roundtrip
 			resultV4 := tt.msg.ProtoReflect().New().Interface()
-			err = MeshtasticDecompressV4(&bufV4, resultV4)
+			err = DecompressV4(&bufV4, resultV4)
 			if err != nil {
-				t.Fatalf("MeshtasticDecompressV4 failed: %v", err)
+				t.Fatalf("DecompressV4 failed: %v", err)
 			}
 
 			if !proto.Equal(tt.msg, resultV4) {
@@ -387,9 +387,9 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 
 			// Verify V5 roundtrip
 			resultV5 := tt.msg.ProtoReflect().New().Interface()
-			err = MeshtasticDecompressV5(&bufV5, resultV5)
+			err = DecompressV5(&bufV5, resultV5)
 			if err != nil {
-				t.Fatalf("MeshtasticDecompressV5 failed: %v", err)
+				t.Fatalf("DecompressV5 failed: %v", err)
 			}
 
 			if !proto.Equal(tt.msg, resultV5) {
@@ -398,9 +398,9 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 
 			// Verify V6 roundtrip
 			resultV6 := tt.msg.ProtoReflect().New().Interface()
-			err = MeshtasticDecompressV6(&bufV6, resultV6)
+			err = DecompressV6(&bufV6, resultV6)
 			if err != nil {
-				t.Fatalf("MeshtasticDecompressV6 failed: %v", err)
+				t.Fatalf("DecompressV6 failed: %v", err)
 			}
 
 			if !proto.Equal(tt.msg, resultV6) {
@@ -409,9 +409,9 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 
 			// Verify V7 roundtrip
 			resultV7 := tt.msg.ProtoReflect().New().Interface()
-			err = MeshtasticDecompressV7(&bufV7, resultV7)
+			err = DecompressV7(&bufV7, resultV7)
 			if err != nil {
-				t.Fatalf("MeshtasticDecompressV7 failed: %v", err)
+				t.Fatalf("DecompressV7 failed: %v", err)
 			}
 
 			if !proto.Equal(tt.msg, resultV7) {
@@ -420,9 +420,9 @@ func TestMeshtasticCompressionRatio(t *testing.T) {
 
 			// Verify V8 roundtrip
 			resultV8 := tt.msg.ProtoReflect().New().Interface()
-			err = MeshtasticDecompressV8(&bufV8, resultV8)
+			err = DecompressV8(&bufV8, resultV8)
 			if err != nil {
-				t.Fatalf("MeshtasticDecompressV8 failed: %v", err)
+				t.Fatalf("DecompressV8 failed: %v", err)
 			}
 
 			if !proto.Equal(tt.msg, resultV8) {
@@ -473,13 +473,13 @@ func TestMeshtasticV6BitPacking(t *testing.T) {
 
 			// Compress with V1
 			var bufV1 bytes.Buffer
-			if err := MeshtasticCompress(tt.msg, &bufV1); err != nil {
+			if err := Compress(tt.msg, &bufV1); err != nil {
 				t.Fatalf("V1 compress failed: %v", err)
 			}
 
 			// Compress with V6
 			var bufV6 bytes.Buffer
-			if err := MeshtasticCompressV6(tt.msg, &bufV6); err != nil {
+			if err := CompressV6(tt.msg, &bufV6); err != nil {
 				t.Fatalf("V6 compress failed: %v", err)
 			}
 
@@ -498,7 +498,7 @@ func TestMeshtasticV6BitPacking(t *testing.T) {
 
 			// Verify roundtrip
 			result := tt.msg.ProtoReflect().New().Interface()
-			if err := MeshtasticDecompressV6(&bufV6, result); err != nil {
+			if err := DecompressV6(&bufV6, result); err != nil {
 				t.Fatalf("V6 decompress failed: %v", err)
 			}
 
@@ -571,13 +571,13 @@ func TestMeshtasticV5ContextAwareness(t *testing.T) {
 
 			// Compress with V1
 			var bufV1 bytes.Buffer
-			if err := MeshtasticCompress(tt.msg, &bufV1); err != nil {
+			if err := Compress(tt.msg, &bufV1); err != nil {
 				t.Fatalf("V1 compress failed: %v", err)
 			}
 
 			// Compress with V5
 			var bufV5 bytes.Buffer
-			if err := MeshtasticCompressV5(tt.msg, &bufV5); err != nil {
+			if err := CompressV5(tt.msg, &bufV5); err != nil {
 				t.Fatalf("V5 compress failed: %v", err)
 			}
 
@@ -594,7 +594,7 @@ func TestMeshtasticV5ContextAwareness(t *testing.T) {
 
 			// Verify roundtrip
 			result := tt.msg.ProtoReflect().New().Interface()
-			if err := MeshtasticDecompressV5(&bufV5, result); err != nil {
+			if err := DecompressV5(&bufV5, result); err != nil {
 				t.Fatalf("V5 decompress failed: %v", err)
 			}
 

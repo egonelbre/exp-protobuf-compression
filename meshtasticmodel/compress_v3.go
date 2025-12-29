@@ -11,22 +11,22 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-// MeshtasticCompressV3 uses hybrid encoding: automatically chooses between
+// CompressV3 uses hybrid encoding: automatically chooses between
 // presence-bit encoding (for dense messages) and delta-encoded field numbers
 // (for sparse messages) based on which is more efficient.
-func MeshtasticCompressV3(msg proto.Message, w io.Writer) error {
-	mmb := NewMeshtasticModelBuilder()
+func CompressV3(msg proto.Message, w io.Writer) error {
+	mmb := NewModelBuilder()
 	enc := arithcode.NewEncoder(w)
 
-	if err := meshtasticCompressMessageV3("", msg.ProtoReflect(), enc, mmb); err != nil {
+	if err := compressMessageV3("", msg.ProtoReflect(), enc, mmb); err != nil {
 		return err
 	}
 
 	return enc.Close()
 }
 
-// meshtasticCompressMessageV3 uses hybrid encoding strategy.
-func meshtasticCompressMessageV3(fieldPath string, msg protoreflect.Message, enc *arithcode.Encoder, mmb *MeshtasticModelBuilder) error {
+// compressMessageV3 uses hybrid encoding strategy.
+func compressMessageV3(fieldPath string, msg protoreflect.Message, enc *arithcode.Encoder, mmb *ModelBuilder) error {
 	md := msg.Descriptor()
 	fields := md.Fields()
 
@@ -59,13 +59,13 @@ func meshtasticCompressMessageV3(fieldPath string, msg protoreflect.Message, enc
 	}
 
 	if useDeltaEncoding {
-		return meshtasticCompressMessageDelta(fieldPath, msg, enc, mmb, presentFields)
+		return compressMessageDelta(fieldPath, msg, enc, mmb, presentFields)
 	}
-	return meshtasticCompressMessagePresenceBits(fieldPath, msg, enc, mmb, fields, presentFields)
+	return compressMessagePresenceBits(fieldPath, msg, enc, mmb, fields, presentFields)
 }
 
-// meshtasticCompressMessagePresenceBits encodes using presence bits.
-func meshtasticCompressMessagePresenceBits(fieldPath string, msg protoreflect.Message, enc *arithcode.Encoder, mmb *MeshtasticModelBuilder, fields protoreflect.FieldDescriptors, presentFields []protoreflect.FieldDescriptor) error {
+// compressMessagePresenceBits encodes using presence bits.
+func compressMessagePresenceBits(fieldPath string, msg protoreflect.Message, enc *arithcode.Encoder, mmb *ModelBuilder, fields protoreflect.FieldDescriptors, presentFields []protoreflect.FieldDescriptor) error {
 	md := msg.Descriptor()
 
 	// Create a map for quick lookup
@@ -98,7 +98,7 @@ func meshtasticCompressMessagePresenceBits(fieldPath string, msg protoreflect.Me
 			mmb.currentPortNum = &portNum
 		}
 
-		if err := meshtasticEncodeFieldV3(currentPath, fd, value, enc, mmb); err != nil {
+		if err := encodeFieldV3(currentPath, fd, value, enc, mmb); err != nil {
 			return fmt.Errorf("field %s: %w", fd.Name(), err)
 		}
 
@@ -111,8 +111,8 @@ func meshtasticCompressMessagePresenceBits(fieldPath string, msg protoreflect.Me
 	return nil
 }
 
-// meshtasticCompressMessageDelta encodes using delta-encoded field numbers.
-func meshtasticCompressMessageDelta(fieldPath string, msg protoreflect.Message, enc *arithcode.Encoder, mmb *MeshtasticModelBuilder, presentFields []protoreflect.FieldDescriptor) error {
+// compressMessageDelta encodes using delta-encoded field numbers.
+func compressMessageDelta(fieldPath string, msg protoreflect.Message, enc *arithcode.Encoder, mmb *ModelBuilder, presentFields []protoreflect.FieldDescriptor) error {
 	md := msg.Descriptor()
 
 	// Encode number of present fields
@@ -148,7 +148,7 @@ func meshtasticCompressMessageDelta(fieldPath string, msg protoreflect.Message, 
 		}
 
 		value := msg.Get(fd)
-		if err := meshtasticEncodeFieldV3(currentPath, fd, value, enc, mmb); err != nil {
+		if err := encodeFieldV3(currentPath, fd, value, enc, mmb); err != nil {
 			return fmt.Errorf("field %s: %w", fd.Name(), err)
 		}
 
@@ -161,20 +161,20 @@ func meshtasticCompressMessageDelta(fieldPath string, msg protoreflect.Message, 
 	return nil
 }
 
-// meshtasticEncodeFieldV3 encodes a field value (shared by both strategies).
-func meshtasticEncodeFieldV3(fieldPath string, fd protoreflect.FieldDescriptor, value protoreflect.Value, enc *arithcode.Encoder, mmb *MeshtasticModelBuilder) error {
+// encodeFieldV3 encodes a field value (shared by both strategies).
+func encodeFieldV3(fieldPath string, fd protoreflect.FieldDescriptor, value protoreflect.Value, enc *arithcode.Encoder, mmb *ModelBuilder) error {
 	if fd.IsList() {
-		return meshtasticCompressRepeatedFieldV3(fieldPath, fd, value.List(), enc, mmb)
+		return compressRepeatedFieldV3(fieldPath, fd, value.List(), enc, mmb)
 	} else if fd.IsMap() {
-		return meshtasticCompressMapFieldV3(fieldPath, fd, value.Map(), enc, mmb)
+		return compressMapFieldV3(fieldPath, fd, value.Map(), enc, mmb)
 	} else if fd.Kind() == protoreflect.MessageKind {
-		return meshtasticCompressMessageV3(fieldPath, value.Message(), enc, mmb)
+		return compressMessageV3(fieldPath, value.Message(), enc, mmb)
 	}
-	return meshtasticCompressFieldValueV3(fieldPath, fd, value, enc, mmb)
+	return compressFieldValueV3(fieldPath, fd, value, enc, mmb)
 }
 
-// meshtasticCompressRepeatedFieldV3 compresses repeated fields.
-func meshtasticCompressRepeatedFieldV3(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, enc *arithcode.Encoder, mmb *MeshtasticModelBuilder) error {
+// compressRepeatedFieldV3 compresses repeated fields.
+func compressRepeatedFieldV3(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, enc *arithcode.Encoder, mmb *ModelBuilder) error {
 	lengthPath := fieldPath + "._length"
 	lengthModel := mmb.GetFieldModel(lengthPath, fd)
 	if lengthModel == nil {
@@ -193,11 +193,11 @@ func meshtasticCompressRepeatedFieldV3(fieldPath string, fd protoreflect.FieldDe
 	for i := 0; i < length; i++ {
 		value := list.Get(i)
 		if fd.Kind() == protoreflect.MessageKind {
-			if err := meshtasticCompressMessageV3(elementPath, value.Message(), enc, mmb); err != nil {
+			if err := compressMessageV3(elementPath, value.Message(), enc, mmb); err != nil {
 				return fmt.Errorf("list element %d: %w", i, err)
 			}
 		} else {
-			if err := meshtasticCompressFieldValueV3(elementPath, fd, value, enc, mmb); err != nil {
+			if err := compressFieldValueV3(elementPath, fd, value, enc, mmb); err != nil {
 				return fmt.Errorf("list element %d: %w", i, err)
 			}
 		}
@@ -206,8 +206,8 @@ func meshtasticCompressRepeatedFieldV3(fieldPath string, fd protoreflect.FieldDe
 	return nil
 }
 
-// meshtasticCompressMapFieldV3 compresses map fields.
-func meshtasticCompressMapFieldV3(fieldPath string, fd protoreflect.FieldDescriptor, m protoreflect.Map, enc *arithcode.Encoder, mmb *MeshtasticModelBuilder) error {
+// compressMapFieldV3 compresses map fields.
+func compressMapFieldV3(fieldPath string, fd protoreflect.FieldDescriptor, m protoreflect.Map, enc *arithcode.Encoder, mmb *ModelBuilder) error {
 	lengthPath := fieldPath + "._length"
 	lengthModel := mmb.GetFieldModel(lengthPath, fd)
 	if lengthModel == nil {
@@ -229,18 +229,18 @@ func meshtasticCompressMapFieldV3(fieldPath string, fd protoreflect.FieldDescrip
 
 	var encodeErr error
 	m.Range(func(k protoreflect.MapKey, v protoreflect.Value) bool {
-		if err := meshtasticCompressFieldValueV3(keyPath, keyFd, k.Value(), enc, mmb); err != nil {
+		if err := compressFieldValueV3(keyPath, keyFd, k.Value(), enc, mmb); err != nil {
 			encodeErr = fmt.Errorf("map key: %w", err)
 			return false
 		}
 
 		if valueFd.Kind() == protoreflect.MessageKind {
-			if err := meshtasticCompressMessageV3(valuePath, v.Message(), enc, mmb); err != nil {
+			if err := compressMessageV3(valuePath, v.Message(), enc, mmb); err != nil {
 				encodeErr = fmt.Errorf("map value: %w", err)
 				return false
 			}
 		} else {
-			if err := meshtasticCompressFieldValueV3(valuePath, valueFd, v, enc, mmb); err != nil {
+			if err := compressFieldValueV3(valuePath, valueFd, v, enc, mmb); err != nil {
 				encodeErr = fmt.Errorf("map value: %w", err)
 				return false
 			}
@@ -252,8 +252,8 @@ func meshtasticCompressMapFieldV3(fieldPath string, fd protoreflect.FieldDescrip
 	return encodeErr
 }
 
-// meshtasticCompressFieldValueV3 compresses a field value (reuses V1/V2 logic).
-func meshtasticCompressFieldValueV3(fieldPath string, fd protoreflect.FieldDescriptor, value protoreflect.Value, enc *arithcode.Encoder, mmb *MeshtasticModelBuilder) error {
+// compressFieldValueV3 compresses a field value (reuses V1/V2 logic).
+func compressFieldValueV3(fieldPath string, fd protoreflect.FieldDescriptor, value protoreflect.Value, enc *arithcode.Encoder, mmb *ModelBuilder) error {
 	// Reuse the V2 implementation
-	return meshtasticCompressFieldValueV2(fieldPath, fd, value, enc, mmb)
+	return compressFieldValueV2(fieldPath, fd, value, enc, mmb)
 }

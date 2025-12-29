@@ -15,25 +15,25 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-// MeshtasticCompressV7 uses field-specific boolean models on top of V6's bit packing
+// CompressV7 uses field-specific boolean models on top of V6's bit packing
 // and V5's context-aware models.
-func MeshtasticCompressV7(msg proto.Message, w io.Writer) error {
-	mcb := NewMeshtasticContextualModelBuilder()
+func CompressV7(msg proto.Message, w io.Writer) error {
+	mcb := NewContextualModelBuilder()
 	enc := arithcode.NewEncoder(w)
 
 	// Set initial message type context
 	msgType := string(msg.ProtoReflect().Descriptor().Name())
 	mcb.SetMessageType(msgType)
 
-	if err := meshtasticCompressMessageV7("", msg.ProtoReflect(), enc, mcb); err != nil {
+	if err := compressMessageV7("", msg.ProtoReflect(), enc, mcb); err != nil {
 		return err
 	}
 
 	return enc.Close()
 }
 
-// meshtasticCompressMessageV7 recursively compresses with field-specific boolean models.
-func meshtasticCompressMessageV7(fieldPath string, msg protoreflect.Message, enc *arithcode.Encoder, mcb *MeshtasticContextualModelBuilder) error {
+// compressMessageV7 recursively compresses with field-specific boolean models.
+func compressMessageV7(fieldPath string, msg protoreflect.Message, enc *arithcode.Encoder, mcb *ContextualModelBuilder) error {
 	md := msg.Descriptor()
 	fields := md.Fields()
 
@@ -74,19 +74,19 @@ func meshtasticCompressMessageV7(fieldPath string, msg protoreflect.Message, enc
 		}
 
 		if fd.IsList() {
-			if err := meshtasticCompressRepeatedFieldV7(currentPath, fd, value.List(), enc, mcb); err != nil {
+			if err := compressRepeatedFieldV7(currentPath, fd, value.List(), enc, mcb); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		} else if fd.IsMap() {
-			if err := meshtasticCompressMapFieldV7(currentPath, fd, value.Map(), enc, mcb); err != nil {
+			if err := compressMapFieldV7(currentPath, fd, value.Map(), enc, mcb); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		} else if fd.Kind() == protoreflect.MessageKind {
-			if err := meshtasticCompressMessageV7(currentPath, value.Message(), enc, mcb); err != nil {
+			if err := compressMessageV7(currentPath, value.Message(), enc, mcb); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		} else {
-			if err := meshtasticCompressFieldValueV7(currentPath, fd, value, enc, mcb); err != nil {
+			if err := compressFieldValueV7(currentPath, fd, value, enc, mcb); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		}
@@ -100,8 +100,8 @@ func meshtasticCompressMessageV7(fieldPath string, msg protoreflect.Message, enc
 	return nil
 }
 
-// meshtasticCompressRepeatedFieldV7 compresses repeated fields.
-func meshtasticCompressRepeatedFieldV7(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, enc *arithcode.Encoder, mcb *MeshtasticContextualModelBuilder) error {
+// compressRepeatedFieldV7 compresses repeated fields.
+func compressRepeatedFieldV7(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, enc *arithcode.Encoder, mcb *ContextualModelBuilder) error {
 	lengthPath := fieldPath + "._length"
 	lengthModel := mcb.GetContextualFieldModel(lengthPath, fd)
 	if lengthModel == nil {
@@ -121,11 +121,11 @@ func meshtasticCompressRepeatedFieldV7(fieldPath string, fd protoreflect.FieldDe
 		value := list.Get(i)
 
 		if fd.Kind() == protoreflect.MessageKind {
-			if err := meshtasticCompressMessageV7(elemPath, value.Message(), enc, mcb); err != nil {
+			if err := compressMessageV7(elemPath, value.Message(), enc, mcb); err != nil {
 				return fmt.Errorf("element %d: %w", i, err)
 			}
 		} else {
-			if err := meshtasticCompressFieldValueV7(elemPath, fd, value, enc, mcb); err != nil {
+			if err := compressFieldValueV7(elemPath, fd, value, enc, mcb); err != nil {
 				return fmt.Errorf("element %d: %w", i, err)
 			}
 		}
@@ -134,8 +134,8 @@ func meshtasticCompressRepeatedFieldV7(fieldPath string, fd protoreflect.FieldDe
 	return nil
 }
 
-// meshtasticCompressMapFieldV7 compresses map fields.
-func meshtasticCompressMapFieldV7(fieldPath string, fd protoreflect.FieldDescriptor, mapVal protoreflect.Map, enc *arithcode.Encoder, mcb *MeshtasticContextualModelBuilder) error {
+// compressMapFieldV7 compresses map fields.
+func compressMapFieldV7(fieldPath string, fd protoreflect.FieldDescriptor, mapVal protoreflect.Map, enc *arithcode.Encoder, mcb *ContextualModelBuilder) error {
 	lengthPath := fieldPath + "._length"
 	lengthModel := mcb.GetContextualFieldModel(lengthPath, fd)
 	if lengthModel == nil {
@@ -163,17 +163,17 @@ func meshtasticCompressMapFieldV7(fieldPath string, fd protoreflect.FieldDescrip
 		keyPath := fmt.Sprintf("%s._key[%d]", fieldPath, i)
 		valuePath := fmt.Sprintf("%s._value[%d]", fieldPath, i)
 
-		if err := meshtasticCompressFieldValueV7(keyPath, keyFd, k.Value(), enc, mcb); err != nil {
+		if err := compressFieldValueV7(keyPath, keyFd, k.Value(), enc, mcb); err != nil {
 			return fmt.Errorf("map key %d: %w", i, err)
 		}
 
 		v := mapVal.Get(k)
 		if valueFd.Kind() == protoreflect.MessageKind {
-			if err := meshtasticCompressMessageV7(valuePath, v.Message(), enc, mcb); err != nil {
+			if err := compressMessageV7(valuePath, v.Message(), enc, mcb); err != nil {
 				return fmt.Errorf("map value %d: %w", i, err)
 			}
 		} else {
-			if err := meshtasticCompressFieldValueV7(valuePath, valueFd, v, enc, mcb); err != nil {
+			if err := compressFieldValueV7(valuePath, valueFd, v, enc, mcb); err != nil {
 				return fmt.Errorf("map value %d: %w", i, err)
 			}
 		}
@@ -182,8 +182,8 @@ func meshtasticCompressMapFieldV7(fieldPath string, fd protoreflect.FieldDescrip
 	return nil
 }
 
-// meshtasticCompressFieldValueV7 compresses a single field value with field-specific models.
-func meshtasticCompressFieldValueV7(fieldPath string, fd protoreflect.FieldDescriptor, value protoreflect.Value, enc *arithcode.Encoder, mcb *MeshtasticContextualModelBuilder) error {
+// compressFieldValueV7 compresses a single field value with field-specific models.
+func compressFieldValueV7(fieldPath string, fd protoreflect.FieldDescriptor, value protoreflect.Value, enc *arithcode.Encoder, mcb *ContextualModelBuilder) error {
 	model := mcb.GetContextualFieldModel(fieldPath, fd)
 	if model == nil {
 		model = mcb.GetFieldModel(fieldPath, fd)

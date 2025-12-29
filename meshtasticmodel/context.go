@@ -5,10 +5,10 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-// MeshtasticContextualModelBuilder creates highly specialized models based on
+// ContextualModelBuilder creates highly specialized models based on
 // message type and field context within Meshtastic protocol messages.
-type MeshtasticContextualModelBuilder struct {
-	*MeshtasticModelBuilder
+type ContextualModelBuilder struct {
+	*ModelBuilder
 
 	// Context tracking
 	messageType     string // Current message type (Position, User, etc.)
@@ -21,10 +21,10 @@ type MeshtasticContextualModelBuilder struct {
 	varintContByteModel  arithcode.Model // Model for continuation bytes
 }
 
-// NewMeshtasticContextualModelBuilder creates a context-aware model builder.
-func NewMeshtasticContextualModelBuilder() *MeshtasticContextualModelBuilder {
-	return &MeshtasticContextualModelBuilder{
-		MeshtasticModelBuilder: NewMeshtasticModelBuilder(),
+// NewContextualModelBuilder creates a context-aware model builder.
+func NewContextualModelBuilder() *ContextualModelBuilder {
+	return &ContextualModelBuilder{
+		ModelBuilder: NewModelBuilder(),
 		contextModels:          make(map[string]arithcode.Model),
 		enumPredictions:        getCommonEnumValues(),
 		booleanModels:          make(map[string]arithcode.Model),
@@ -34,7 +34,7 @@ func NewMeshtasticContextualModelBuilder() *MeshtasticContextualModelBuilder {
 }
 
 // GetContextualFieldModel returns a model optimized for the specific field context.
-func (mcb *MeshtasticContextualModelBuilder) GetContextualFieldModel(fieldPath string, fd protoreflect.FieldDescriptor) arithcode.Model {
+func (mcb *ContextualModelBuilder) GetContextualFieldModel(fieldPath string, fd protoreflect.FieldDescriptor) arithcode.Model {
 	// Build context key
 	contextKey := mcb.messageType + ":" + fieldPath
 
@@ -55,7 +55,7 @@ func (mcb *MeshtasticContextualModelBuilder) GetContextualFieldModel(fieldPath s
 }
 
 // createContextSpecificModel creates specialized models for known Meshtastic field patterns.
-func (mcb *MeshtasticContextualModelBuilder) createContextSpecificModel(fieldPath string, fd protoreflect.FieldDescriptor) arithcode.Model {
+func (mcb *ContextualModelBuilder) createContextSpecificModel(fieldPath string, fd protoreflect.FieldDescriptor) arithcode.Model {
 	fieldName := string(fd.Name())
 
 	// Coordinate models (latitude_i, longitude_i)
@@ -448,14 +448,14 @@ func createIAQModel() arithcode.Model {
 }
 
 // SetMessageType sets the current message type context for better model selection.
-func (mcb *MeshtasticContextualModelBuilder) SetMessageType(msgType string) {
+func (mcb *ContextualModelBuilder) SetMessageType(msgType string) {
 	mcb.messageType = msgType
 }
 
 // GetBooleanModel returns a field-specific boolean model optimized for the given field.
 // Different boolean fields have different probability distributions - some are almost
 // always false, some are often true, etc.
-func (mcb *MeshtasticContextualModelBuilder) GetBooleanModel(fieldName string) arithcode.Model {
+func (mcb *ContextualModelBuilder) GetBooleanModel(fieldName string) arithcode.Model {
 	// Check cache
 	if model, ok := mcb.booleanModels[fieldName]; ok {
 		return model
@@ -623,7 +623,7 @@ func createVarintContinuationByteModel() arithcode.Model {
 
 // GetVarintByteModel returns the appropriate model for a varint byte.
 // byteIndex: 0 for first byte, 1+ for continuation bytes
-func (mcb *MeshtasticContextualModelBuilder) GetVarintByteModel(byteIndex int) arithcode.Model {
+func (mcb *ContextualModelBuilder) GetVarintByteModel(byteIndex int) arithcode.Model {
 	if byteIndex == 0 {
 		return mcb.varintFirstByteModel
 	}

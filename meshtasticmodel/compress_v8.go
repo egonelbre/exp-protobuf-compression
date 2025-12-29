@@ -15,16 +15,16 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-// MeshtasticCompressV8 uses varint byte models on top of V7's field-specific boolean models.
-func MeshtasticCompressV8(msg proto.Message, w io.Writer) error {
-	mcb := NewMeshtasticContextualModelBuilder()
+// CompressV8 uses varint byte models on top of V7's field-specific boolean models.
+func CompressV8(msg proto.Message, w io.Writer) error {
+	mcb := NewContextualModelBuilder()
 	enc := arithcode.NewEncoder(w)
 
 	// Set initial message type context
 	msgType := string(msg.ProtoReflect().Descriptor().Name())
 	mcb.SetMessageType(msgType)
 
-	if err := meshtasticCompressMessageV8("", msg.ProtoReflect(), enc, mcb); err != nil {
+	if err := compressMessageV8("", msg.ProtoReflect(), enc, mcb); err != nil {
 		return err
 	}
 
@@ -32,7 +32,7 @@ func MeshtasticCompressV8(msg proto.Message, w io.Writer) error {
 }
 
 // encodeVarintWithModels encodes a varint using position-specific byte models.
-func encodeVarintWithModels(value uint64, enc *arithcode.Encoder, mcb *MeshtasticContextualModelBuilder) error {
+func encodeVarintWithModels(value uint64, enc *arithcode.Encoder, mcb *ContextualModelBuilder) error {
 	varintBytes := pbmodel.EncodeVarint(value)
 	for i, b := range varintBytes {
 		model := mcb.GetVarintByteModel(i)
@@ -43,8 +43,8 @@ func encodeVarintWithModels(value uint64, enc *arithcode.Encoder, mcb *Meshtasti
 	return nil
 }
 
-// meshtasticCompressMessageV8 recursively compresses with field-specific boolean models.
-func meshtasticCompressMessageV8(fieldPath string, msg protoreflect.Message, enc *arithcode.Encoder, mcb *MeshtasticContextualModelBuilder) error {
+// compressMessageV8 recursively compresses with field-specific boolean models.
+func compressMessageV8(fieldPath string, msg protoreflect.Message, enc *arithcode.Encoder, mcb *ContextualModelBuilder) error {
 	md := msg.Descriptor()
 	fields := md.Fields()
 
@@ -85,19 +85,19 @@ func meshtasticCompressMessageV8(fieldPath string, msg protoreflect.Message, enc
 		}
 
 		if fd.IsList() {
-			if err := meshtasticCompressRepeatedFieldV8(currentPath, fd, value.List(), enc, mcb); err != nil {
+			if err := compressRepeatedFieldV8(currentPath, fd, value.List(), enc, mcb); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		} else if fd.IsMap() {
-			if err := meshtasticCompressMapFieldV8(currentPath, fd, value.Map(), enc, mcb); err != nil {
+			if err := compressMapFieldV8(currentPath, fd, value.Map(), enc, mcb); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		} else if fd.Kind() == protoreflect.MessageKind {
-			if err := meshtasticCompressMessageV8(currentPath, value.Message(), enc, mcb); err != nil {
+			if err := compressMessageV8(currentPath, value.Message(), enc, mcb); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		} else {
-			if err := meshtasticCompressFieldValueV8(currentPath, fd, value, enc, mcb); err != nil {
+			if err := compressFieldValueV8(currentPath, fd, value, enc, mcb); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		}
@@ -111,8 +111,8 @@ func meshtasticCompressMessageV8(fieldPath string, msg protoreflect.Message, enc
 	return nil
 }
 
-// meshtasticCompressRepeatedFieldV8 compresses repeated fields.
-func meshtasticCompressRepeatedFieldV8(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, enc *arithcode.Encoder, mcb *MeshtasticContextualModelBuilder) error {
+// compressRepeatedFieldV8 compresses repeated fields.
+func compressRepeatedFieldV8(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, enc *arithcode.Encoder, mcb *ContextualModelBuilder) error {
 	lengthPath := fieldPath + "._length"
 	lengthModel := mcb.GetContextualFieldModel(lengthPath, fd)
 	if lengthModel == nil {
@@ -129,11 +129,11 @@ func meshtasticCompressRepeatedFieldV8(fieldPath string, fd protoreflect.FieldDe
 		value := list.Get(i)
 
 		if fd.Kind() == protoreflect.MessageKind {
-			if err := meshtasticCompressMessageV8(elemPath, value.Message(), enc, mcb); err != nil {
+			if err := compressMessageV8(elemPath, value.Message(), enc, mcb); err != nil {
 				return fmt.Errorf("element %d: %w", i, err)
 			}
 		} else {
-			if err := meshtasticCompressFieldValueV8(elemPath, fd, value, enc, mcb); err != nil {
+			if err := compressFieldValueV8(elemPath, fd, value, enc, mcb); err != nil {
 				return fmt.Errorf("element %d: %w", i, err)
 			}
 		}
@@ -142,8 +142,8 @@ func meshtasticCompressRepeatedFieldV8(fieldPath string, fd protoreflect.FieldDe
 	return nil
 }
 
-// meshtasticCompressMapFieldV8 compresses map fields.
-func meshtasticCompressMapFieldV8(fieldPath string, fd protoreflect.FieldDescriptor, mapVal protoreflect.Map, enc *arithcode.Encoder, mcb *MeshtasticContextualModelBuilder) error {
+// compressMapFieldV8 compresses map fields.
+func compressMapFieldV8(fieldPath string, fd protoreflect.FieldDescriptor, mapVal protoreflect.Map, enc *arithcode.Encoder, mcb *ContextualModelBuilder) error {
 	lengthPath := fieldPath + "._length"
 	lengthModel := mcb.GetContextualFieldModel(lengthPath, fd)
 	if lengthModel == nil {
@@ -168,17 +168,17 @@ func meshtasticCompressMapFieldV8(fieldPath string, fd protoreflect.FieldDescrip
 		keyPath := fmt.Sprintf("%s._key[%d]", fieldPath, i)
 		valuePath := fmt.Sprintf("%s._value[%d]", fieldPath, i)
 
-		if err := meshtasticCompressFieldValueV8(keyPath, keyFd, k.Value(), enc, mcb); err != nil {
+		if err := compressFieldValueV8(keyPath, keyFd, k.Value(), enc, mcb); err != nil {
 			return fmt.Errorf("map key %d: %w", i, err)
 		}
 
 		v := mapVal.Get(k)
 		if valueFd.Kind() == protoreflect.MessageKind {
-			if err := meshtasticCompressMessageV8(valuePath, v.Message(), enc, mcb); err != nil {
+			if err := compressMessageV8(valuePath, v.Message(), enc, mcb); err != nil {
 				return fmt.Errorf("map value %d: %w", i, err)
 			}
 		} else {
-			if err := meshtasticCompressFieldValueV8(valuePath, valueFd, v, enc, mcb); err != nil {
+			if err := compressFieldValueV8(valuePath, valueFd, v, enc, mcb); err != nil {
 				return fmt.Errorf("map value %d: %w", i, err)
 			}
 		}
@@ -187,8 +187,8 @@ func meshtasticCompressMapFieldV8(fieldPath string, fd protoreflect.FieldDescrip
 	return nil
 }
 
-// meshtasticCompressFieldValueV8 compresses a single field value with field-specific models.
-func meshtasticCompressFieldValueV8(fieldPath string, fd protoreflect.FieldDescriptor, value protoreflect.Value, enc *arithcode.Encoder, mcb *MeshtasticContextualModelBuilder) error {
+// compressFieldValueV8 compresses a single field value with field-specific models.
+func compressFieldValueV8(fieldPath string, fd protoreflect.FieldDescriptor, value protoreflect.Value, enc *arithcode.Encoder, mcb *ContextualModelBuilder) error {
 	model := mcb.GetContextualFieldModel(fieldPath, fd)
 	if model == nil {
 		model = mcb.GetFieldModel(fieldPath, fd)

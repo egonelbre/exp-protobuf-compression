@@ -9,98 +9,93 @@ import (
 	"unicode/utf8"
 
 	"github.com/egonelbre/exp-protobuf-compression/arithcode"
-	"github.com/egonelbre/exp-protobuf-compression/pbmodel"
 	"github.com/egonelbre/exp-protobuf-compression/meshtastic"
+	"github.com/egonelbre/exp-protobuf-compression/pbmodel"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-// MeshtasticCompressV2 compresses a protobuf message with optimized field encoding.
-// Instead of encoding a presence bit for each field, it encodes only present fields
-// using delta-encoded field numbers, significantly reducing overhead for sparse messages.
-func MeshtasticCompressV2(msg proto.Message, w io.Writer) error {
-	mmb := NewMeshtasticModelBuilder()
+// Compress compresses a protobuf message with Meshtastic-specific optimizations.
+// This includes:
+// - Treating Data.payload as text when portnum is TEXT_MESSAGE_APP
+// - Delta encoding for coordinates
+// - Optimized models for common Meshtastic field patterns
+func Compress(msg proto.Message, w io.Writer) error {
+	mmb := NewModelBuilder()
 	enc := arithcode.NewEncoder(w)
 
-	if err := meshtasticCompressMessageV2("", msg.ProtoReflect(), enc, mmb); err != nil {
+	if err := compressMessage("", msg.ProtoReflect(), enc, mmb); err != nil {
 		return err
 	}
 
 	return enc.Close()
 }
 
-// meshtasticCompressMessageV2 recursively compresses with delta-encoded field numbers.
-func meshtasticCompressMessageV2(fieldPath string, msg protoreflect.Message, enc *arithcode.Encoder, mmb *MeshtasticModelBuilder) error {
+// ModelBuilder extends AdaptiveModelBuilder with Meshtastic-specific knowledge.
+type ModelBuilder struct {
+	*pbmodel.AdaptiveModelBuilder
+	currentPortNum *meshtastic.PortNum
+}
+
+// NewModelBuilder creates a new Meshtastic-specific model builder.
+func NewModelBuilder() *ModelBuilder {
+	return &ModelBuilder{
+		AdaptiveModelBuilder: pbmodel.NewAdaptiveModelBuilder(),
+	}
+}
+
+// compressMessage recursively compresses with Meshtastic-specific optimizations.
+func compressMessage(fieldPath string, msg protoreflect.Message, enc *arithcode.Encoder, mmb *ModelBuilder) error {
 	md := msg.Descriptor()
 	fields := md.Fields()
 
-	// Collect present fields
-	var presentFields []protoreflect.FieldDescriptor
+	// Iterate through all fields in order
 	for i := 0; i < fields.Len(); i++ {
 		fd := fields.Get(i)
-		if msg.Has(fd) {
-			presentFields = append(presentFields, fd)
-		}
-	}
-
-	// Encode number of present fields
-	numPresent := len(presentFields)
-	numPresentBytes := pbmodel.EncodeVarint(uint64(numPresent))
-	for _, b := range numPresentBytes {
-		if err := enc.Encode(int(b), mmb.ByteModel()); err != nil {
-			return fmt.Errorf("num present fields: %w", err)
-		}
-	}
-
-	// Encode present fields using delta encoding
-	lastFieldNum := 0
-	for _, fd := range presentFields {
 		currentPath := pbmodel.BuildFieldPath(fieldPath, string(fd.Name()))
-		fieldNum := int(fd.Number())
 
-		// Encode delta from last field number
-		delta := fieldNum - lastFieldNum
-		if delta < 0 {
-			return fmt.Errorf("fields not in order: %d after %d", fieldNum, lastFieldNum)
-		}
-		deltaBytes := pbmodel.EncodeVarint(uint64(delta))
-		for _, b := range deltaBytes {
-			if err := enc.Encode(int(b), mmb.ByteModel()); err != nil {
-				return fmt.Errorf("field delta: %w", err)
+		if !msg.Has(fd) {
+			// Field not set, encode a "not present" marker
+			if err := enc.Encode(0, mmb.BoolModel()); err != nil {
+				return fmt.Errorf("field %s presence: %w", fd.Name(), err)
 			}
+			continue
 		}
-		lastFieldNum = fieldNum
+
+		// Field is present
+		if err := enc.Encode(1, mmb.BoolModel()); err != nil {
+			return fmt.Errorf("field %s presence: %w", fd.Name(), err)
+		}
+
+		value := msg.Get(fd)
 
 		// Track portnum for payload detection
 		if fd.Name() == "portnum" && fd.Kind() == protoreflect.EnumKind {
-			value := msg.Get(fd)
 			enumVal := value.Enum()
 			portNum := meshtastic.PortNum(enumVal)
 			mmb.currentPortNum = &portNum
 		}
 
-		// Encode field value
-		value := msg.Get(fd)
 		if fd.IsList() {
-			if err := meshtasticCompressRepeatedFieldV2(currentPath, fd, value.List(), enc, mmb); err != nil {
+			if err := compressRepeatedField(currentPath, fd, value.List(), enc, mmb); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		} else if fd.IsMap() {
-			if err := meshtasticCompressMapFieldV2(currentPath, fd, value.Map(), enc, mmb); err != nil {
+			if err := pbmodel.AdaptiveCompressMapField(currentPath, fd, value.Map(), enc, mmb.AdaptiveModelBuilder); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		} else if fd.Kind() == protoreflect.MessageKind {
-			if err := meshtasticCompressMessageV2(currentPath, value.Message(), enc, mmb); err != nil {
+			if err := compressMessage(currentPath, value.Message(), enc, mmb); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		} else {
-			if err := meshtasticCompressFieldValueV2(currentPath, fd, value, enc, mmb); err != nil {
+			if err := compressFieldValue(currentPath, fd, value, enc, mmb); err != nil {
 				return fmt.Errorf("field %s: %w", fd.Name(), err)
 			}
 		}
 
 		// Reset portnum after processing Data message
-		if md.Name() == "Data" && fd == presentFields[len(presentFields)-1] {
+		if md.Name() == "Data" && i == fields.Len()-1 {
 			mmb.currentPortNum = nil
 		}
 	}
@@ -108,8 +103,8 @@ func meshtasticCompressMessageV2(fieldPath string, msg protoreflect.Message, enc
 	return nil
 }
 
-// meshtasticCompressRepeatedFieldV2 compresses repeated fields.
-func meshtasticCompressRepeatedFieldV2(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, enc *arithcode.Encoder, mmb *MeshtasticModelBuilder) error {
+// compressRepeatedField compresses repeated fields with Meshtastic optimizations.
+func compressRepeatedField(fieldPath string, fd protoreflect.FieldDescriptor, list protoreflect.List, enc *arithcode.Encoder, mmb *ModelBuilder) error {
 	lengthPath := fieldPath + "._length"
 	lengthModel := mmb.GetFieldModel(lengthPath, fd)
 	if lengthModel == nil {
@@ -128,11 +123,11 @@ func meshtasticCompressRepeatedFieldV2(fieldPath string, fd protoreflect.FieldDe
 	for i := 0; i < length; i++ {
 		value := list.Get(i)
 		if fd.Kind() == protoreflect.MessageKind {
-			if err := meshtasticCompressMessageV2(elementPath, value.Message(), enc, mmb); err != nil {
+			if err := compressMessage(elementPath, value.Message(), enc, mmb); err != nil {
 				return fmt.Errorf("list element %d: %w", i, err)
 			}
 		} else {
-			if err := meshtasticCompressFieldValueV2(elementPath, fd, value, enc, mmb); err != nil {
+			if err := compressFieldValue(elementPath, fd, value, enc, mmb); err != nil {
 				return fmt.Errorf("list element %d: %w", i, err)
 			}
 		}
@@ -141,62 +136,18 @@ func meshtasticCompressRepeatedFieldV2(fieldPath string, fd protoreflect.FieldDe
 	return nil
 }
 
-// meshtasticCompressMapFieldV2 compresses map fields.
-func meshtasticCompressMapFieldV2(fieldPath string, fd protoreflect.FieldDescriptor, m protoreflect.Map, enc *arithcode.Encoder, mmb *MeshtasticModelBuilder) error {
-	lengthPath := fieldPath + "._length"
-	lengthModel := mmb.GetFieldModel(lengthPath, fd)
-	if lengthModel == nil {
-		lengthModel = mmb.ByteModel()
-	}
-
-	length := m.Len()
-	lengthBytes := pbmodel.EncodeVarint(uint64(length))
-	for _, b := range lengthBytes {
-		if err := enc.Encode(int(b), lengthModel); err != nil {
-			return fmt.Errorf("map length: %w", err)
-		}
-	}
-
-	keyFd := fd.MapKey()
-	valueFd := fd.MapValue()
-	keyPath := fieldPath + "._key"
-	valuePath := fieldPath + "._value"
-
-	var encodeErr error
-	m.Range(func(k protoreflect.MapKey, v protoreflect.Value) bool {
-		if err := meshtasticCompressFieldValueV2(keyPath, keyFd, k.Value(), enc, mmb); err != nil {
-			encodeErr = fmt.Errorf("map key: %w", err)
-			return false
-		}
-
-		if valueFd.Kind() == protoreflect.MessageKind {
-			if err := meshtasticCompressMessageV2(valuePath, v.Message(), enc, mmb); err != nil {
-				encodeErr = fmt.Errorf("map value: %w", err)
-				return false
-			}
-		} else {
-			if err := meshtasticCompressFieldValueV2(valuePath, valueFd, v, enc, mmb); err != nil {
-				encodeErr = fmt.Errorf("map value: %w", err)
-				return false
-			}
-		}
-
-		return true
-	})
-
-	return encodeErr
-}
-
-// meshtasticCompressFieldValueV2 compresses field values with Meshtastic-specific logic.
-func meshtasticCompressFieldValueV2(fieldPath string, fd protoreflect.FieldDescriptor, value protoreflect.Value, enc *arithcode.Encoder, mmb *MeshtasticModelBuilder) error {
+// compressFieldValue compresses field values with Meshtastic-specific logic.
+func compressFieldValue(fieldPath string, fd protoreflect.FieldDescriptor, value protoreflect.Value, enc *arithcode.Encoder, mmb *ModelBuilder) error {
 	// Special handling for Data.payload field
 	if fd.Name() == "payload" && fd.Kind() == protoreflect.BytesKind {
 		data := value.Bytes()
 
-		// Check if this is likely text
+		// Check if this is likely text based on portnum
 		isText := mmb.currentPortNum != nil && *mmb.currentPortNum == meshtastic.PortNum_TEXT_MESSAGE_APP
 
+		// Also check if the bytes are valid UTF-8 as a fallback
 		if !isText && utf8.Valid(data) {
+			// Additional heuristic: check if mostly printable ASCII
 			printableCount := 0
 			for _, b := range data {
 				if b >= 32 && b <= 126 || b == '\n' || b == '\r' || b == '\t' {
@@ -206,7 +157,7 @@ func meshtasticCompressFieldValueV2(fieldPath string, fd protoreflect.FieldDescr
 			isText = len(data) > 0 && float64(printableCount)/float64(len(data)) > 0.8
 		}
 
-		// Encode text flag
+		// Encode a flag indicating whether this is text
 		textFlag := 0
 		if isText {
 			textFlag = 1
@@ -216,7 +167,7 @@ func meshtasticCompressFieldValueV2(fieldPath string, fd protoreflect.FieldDescr
 		}
 
 		if isText {
-			// Compress as text
+			// Compress as text using English model
 			str := string(data)
 			var buf bytes.Buffer
 			if err := arithcode.EncodeString(str, &buf); err != nil {
@@ -236,8 +187,11 @@ func meshtasticCompressFieldValueV2(fieldPath string, fd protoreflect.FieldDescr
 			}
 			return nil
 		}
+
+		// Fall through to normal bytes encoding
 	}
 
+	// Use adaptive compression for other fields
 	model := mmb.GetFieldModel(fieldPath, fd)
 
 	switch fd.Kind() {
@@ -358,6 +312,7 @@ func meshtasticCompressFieldValueV2(fieldPath string, fd protoreflect.FieldDescr
 		return nil
 
 	case protoreflect.StringKind:
+		// Use the English model for strings
 		str := value.String()
 		var buf bytes.Buffer
 		if err := arithcode.EncodeString(str, &buf); err != nil {
@@ -379,12 +334,14 @@ func meshtasticCompressFieldValueV2(fieldPath string, fd protoreflect.FieldDescr
 
 	case protoreflect.BytesKind:
 		data := value.Bytes()
+		// Encode length
 		lengthBytes := pbmodel.EncodeVarint(uint64(len(data)))
 		for _, b := range lengthBytes {
 			if err := enc.Encode(int(b), model); err != nil {
 				return err
 			}
 		}
+		// Encode bytes
 		for _, b := range data {
 			if err := enc.Encode(int(b), mmb.ByteModel()); err != nil {
 				return err
